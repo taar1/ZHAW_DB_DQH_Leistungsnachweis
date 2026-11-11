@@ -2,8 +2,8 @@
 title: "Leistungsnachweis DB & DWH – Variante 1"
 subtitle: "Operative Datenbank, Datawarehouse und Auswertung für den Brief- und Paketversand der Schweizer Post"
 author:
-  - "[Name Teammitglied 1]"
-  - "Joel [Nachname]"
+  - "Dominik Erbsland"
+  - "Joel Liechti"
 date: "30. November 2026"
 lang: de-CH
 ---
@@ -15,7 +15,7 @@ lang: de-CH
 | | |
 |---|---|
 | Modul | Datenbanken & Datawarehouse (DB & DWH), ZHAW School of Engineering |
-| Team | [Name Teammitglied 1], Joel [Nachname] |
+| Team | Dominik Erbsland, Joel Liechti |
 | Abgabe | 30.11.2026 |
 | Repository | <https://github.com/taar1/ZHAW_DB_DQH_Leistungsnachweis> |
 | Werkzeuge | Databricks Free Edition (Serverless, Unity Catalog), Python, Mermaid, [Power BI] |
