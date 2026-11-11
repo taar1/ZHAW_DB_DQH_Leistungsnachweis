@@ -1,0 +1,5 @@
+* text=auto eol=lf
+*.pbix binary
+*.dbc binary
+*.pdf binary
+*.png binary

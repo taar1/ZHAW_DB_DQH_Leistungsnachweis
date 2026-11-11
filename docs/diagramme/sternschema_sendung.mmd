@@ -1,0 +1,86 @@
+---
+title: Multidimensionales Modell (Sternschema) – Geschäftsobjekt Sendung (Vorschlag)
+---
+erDiagram
+    DIM_DATUM ||--o{ FACT_SENDUNG : "Aufgabedatum"
+    DIM_KUNDE ||--o{ FACT_SENDUNG : "Absender"
+    DIM_PRODUKT ||--o{ FACT_SENDUNG : "Produkt"
+    DIM_KANAL ||--o{ FACT_SENDUNG : "Verkaufskanal"
+    DIM_ZIELGEBIET ||--o{ FACT_SENDUNG : "Empfängerort"
+    DIM_STATUS ||--o{ FACT_SENDUNG : "Sendungsstatus"
+
+    FACT_SENDUNG {
+        bigint sendung_key PK "Grain: 1 Zeile = 1 Sendung"
+        int datum_key FK
+        int kunde_key FK
+        int produkt_key FK
+        int kanal_key FK
+        int zielgebiet_key FK
+        int status_key FK
+        string tracking_nr "degenerierte Dimension"
+        int anzahl_sendungen "Mass (immer 1)"
+        decimal umsatz_chf "Mass, additiv"
+        decimal listenpreis_chf "Mass, additiv"
+        decimal rabatt_chf "Mass, additiv"
+        int gewicht_g "Mass, additiv"
+        int anzahl_zusatzleistungen "Mass, additiv"
+        int laufzeit_werktage "Mass, nicht additiv (Durchschnitt)"
+        int verspaetung_werktage "Mass, nicht additiv"
+        int puenktlich_flag "1 = bis Soll-Datum zugestellt"
+    }
+    DIM_DATUM {
+        int datum_key PK "YYYYMMDD"
+        date datum
+        int jahr
+        int quartal
+        int monat
+        string monat_name
+        int kalenderwoche
+        string wochentag
+        boolean ist_werktag
+        boolean ist_weihnachtszeit
+    }
+    DIM_KUNDE {
+        int kunde_key PK
+        string kundennummer
+        string kundentyp "Hierarchie: Kundentyp > Profil > Kunde"
+        string geschaeftsprofil
+        string name "Firma bzw. Vor- und Nachname"
+        string ort
+        string kanton
+        string region
+        string altersgruppe
+        decimal rabatt_prozent
+    }
+    DIM_PRODUKT {
+        int produkt_key PK
+        string produkt_code
+        string produkt_name
+        string sendungsart "Hierarchie: Sendungsart > Zone > Service > Produkt"
+        string zone
+        string service
+        string format
+        int laufzeit_soll_werktage
+        decimal listenpreis_chf
+    }
+    DIM_KANAL {
+        int kanal_key PK
+        string kanal_code
+        string kanal_name
+        string kanal_typ "Hierarchie: Kanaltyp > Kanal"
+    }
+    DIM_ZIELGEBIET {
+        int zielgebiet_key PK
+        string plz
+        string ort
+        string kanton
+        string region "Hierarchie: Zone > Land > Region > Kanton > Ort"
+        string land_code
+        string land_name
+        string zone
+    }
+    DIM_STATUS {
+        int status_key PK
+        string status
+        boolean ist_abgeschlossen
+    }
