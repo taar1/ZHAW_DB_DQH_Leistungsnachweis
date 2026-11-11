@@ -1,37 +1,14 @@
 ---
-title: Medaillon-Architektur Datawarehouse (Vorschlag)
+title: Medaillon-Architektur Datawarehouse
 ---
 flowchart LR
-    subgraph SRC["Quelle: operative DB<br/>workspace.post_oltp"]
-        direction TB
-        S1[(kunde, empfaenger)]
-        S2[(produkt, verkaufskanal,<br/>land)]
-        S3[(auftrag, sendung)]
-    end
+    SRC[("Operative DB<br/>post_oltp<br/>7 Tabellen")]
+    B["Bronze<br/>post_dwh_bronze<br/>1:1-Kopie + Ladezeitpunkt"]
+    S["Silver<br/>post_dwh_silver<br/>bereinigt, DQ-Flags,<br/>dq_protokoll"]
+    G["Gold<br/>post_dwh_gold<br/>Sternschema"]
+    D["Dashboard"]
 
-    subgraph BRONZE["Bronze: post_dwh_bronze"]
-        direction TB
-        B1["1:1-Kopie aller Tabellen<br/>+ _ladezeitpunkt, _quelle<br/>(keine Veränderung der Daten)"]
-    end
-
-    subgraph SILVER["Silver: post_dwh_silver"]
-        direction TB
-        V1["Bereinigt und standardisiert<br/>(Ort, PLZ, E-Mail)"]
-        V2["Datenqualitätsprüfungen<br/>→ dq_flags je Zeile"]
-        V3[("Quarantäne-Tabellen<br/>dq_quarantaene_*")]
-        V1 --> V2 --> V3
-    end
-
-    subgraph GOLD["Gold: post_dwh_gold"]
-        direction TB
-        G1["Sternschema<br/>fact_sendung<br/>dim_datum, dim_kunde, dim_produkt,<br/>dim_kanal, dim_zielgebiet, dim_status"]
-        G2["Aggregierte Sichten / KPIs<br/>(für Dashboard)"]
-        G1 --> G2
-    end
-
-    DASH["Dashboard<br/>(Databricks AI/BI oder Power BI)"]
-
-    SRC -->|"ETL-Notebook 1<br/>Extract"| BRONZE
-    BRONZE -->|"ETL-Notebook 2<br/>Clean + DQ"| SILVER
-    SILVER -->|"ETL-Notebook 3<br/>Transform + Load"| GOLD
-    GOLD --> DASH
+    SRC -->|"10_bronze_laden"| B
+    B -->|"20_silver_bereinigen"| S
+    S -->|"30_gold_sternschema"| G
+    G --> D

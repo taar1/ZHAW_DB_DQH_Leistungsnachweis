@@ -1,78 +1,59 @@
 ---
-title: Multidimensionales Modell (Sternschema) – Geschäftsobjekt Sendung (Vorschlag)
+title: Multidimensionales Modell (Sternschema) – Geschäftsobjekt Sendung
 ---
 erDiagram
     DIM_DATUM ||--o{ FACT_SENDUNG : "Aufgabedatum"
     DIM_KUNDE ||--o{ FACT_SENDUNG : "Absender"
     DIM_PRODUKT ||--o{ FACT_SENDUNG : "Produkt"
     DIM_KANAL ||--o{ FACT_SENDUNG : "Verkaufskanal"
-    DIM_ZIELGEBIET ||--o{ FACT_SENDUNG : "Empfängerort"
-    DIM_STATUS ||--o{ FACT_SENDUNG : "Sendungsstatus"
+    DIM_ZIELLAND ||--o{ FACT_SENDUNG : "Empfängerland"
 
     FACT_SENDUNG {
-        bigint sendung_key PK "Grain: 1 Zeile = 1 Sendung"
-        int datum_key FK
-        int kunde_key FK
-        int produkt_key FK
-        int kanal_key FK
-        int zielgebiet_key FK
-        int status_key FK
+        int auftrag_id PK "Grain: 1 Zeile = 1 Sendung"
+        int position_nr PK
+        int datum_key FK "YYYYMMDD"
+        int kunde_id FK
+        int produkt_id FK
+        int kanal_id FK
+        string land_code FK
         string tracking_nr "degenerierte Dimension"
+        string status "degenerierte Dimension"
         int anzahl_sendungen "Mass (immer 1)"
         decimal umsatz_chf "Mass, additiv"
         int gewicht_g "Mass, additiv"
-        int laufzeit_werktage "Mass, nicht additiv (Durchschnitt)"
-        int verspaetung_werktage "Mass, nicht additiv"
+        int laufzeit_werktage "Mass, nicht additiv"
         int puenktlich_flag "1 = bis Soll-Datum zugestellt"
     }
     DIM_DATUM {
         int datum_key PK "YYYYMMDD"
         date datum
-        int jahr
+        int jahr "Hierarchie: Jahr > Quartal > Monat > Tag"
         int quartal
         int monat
         string monat_name
-        int kalenderwoche
         string wochentag
-        boolean ist_werktag
-        boolean ist_weihnachtszeit
     }
     DIM_KUNDE {
-        int kunde_key PK
-        int kunde_id "Business Key"
+        int kunde_id PK
         string kundentyp "Hierarchie: Kundentyp > Kunde"
         string name "Firma bzw. Vor- und Nachname"
-        string plz
         string ort
-        string land_code
     }
     DIM_PRODUKT {
-        int produkt_key PK
-        int produkt_id "Business Key"
+        int produkt_id PK
         string produkt_name
         string sendungsart "Hierarchie: Sendungsart > Zone > Service > Produkt"
         string zone
         string service
-        int max_gewicht_g
         int laufzeit_soll_werktage
-        decimal listenpreis_chf
     }
     DIM_KANAL {
-        int kanal_key PK
-        int kanal_id "Business Key"
+        int kanal_id PK
         string kanal_name
         string kanal_typ "Hierarchie: Kanaltyp > Kanal"
     }
-    DIM_ZIELGEBIET {
-        int zielgebiet_key PK
-        string zone "Hierarchie: Zone > Land > Ort"
-        string land_code
+    DIM_ZIELLAND {
+        string land_code PK "XX = unbekannt"
         string land_name
-        string plz
-        string ort
-    }
-    DIM_STATUS {
-        int status_key PK
-        string status
-        boolean ist_abgeschlossen
+        string zone "Hierarchie: Zone > Land"
     }

@@ -195,6 +195,10 @@ erDiagram
 Die Adresse ist direkt in `KUNDE` bzw. `EMPFAENGER` gespeichert. Eine eigene Adresstabelle wäre normalisierter,
 bringt für unsere Auswertungen aber keinen Mehrwert.
 
+`KUNDE` und `EMPFAENGER` sind bewusst getrennt: Der Kunde kauft und bezahlt (Kundenbeziehung), der Empfänger
+ist nur die Zieladresse einer Sendung, oft im Ausland und ohne Beziehung zur Post. Ist eine Person beides, ist
+das ein Rollenwechsel und wird nicht verknüpft.
+
 ### 2.3 Beziehungen und Kardinalitäten
 
 | Beziehung | Kardinalität | Erläuterung |
@@ -280,22 +284,16 @@ CREATE TABLE post_oltp.sendung (
 
 Die Beispieldaten erzeugt ein Python-Skript ([`scripts/generate_data.py`](../scripts/generate_data.py)). Es
 schreibt SQL-INSERT-Skripte (`sql/02_…` bis `sql/04_…`). Der Generator arbeitet mit einem **fixen Zufalls-Seed**,
-die Daten sind also reproduzierbar. Er simuliert nicht einfach zufällige Zeilen, sondern den Geschäftsprozess:
+die Daten sind also reproduzierbar. Er simuliert den Geschäftsprozess, damit die Auswertungen realistische Muster zeigen:
 
-- Kunden registrieren sich über die Zeit. Aufträge entstehen erst nach der Registrierung.
-- Jeder Kunde hat einen **bevorzugten Kanal** (Geschäftskunden meist das Geschäftskundenportal, Privatkunden oft die
-  Filiale oder die App). Digitale Kanäle gewinnen über die Jahre Anteile.
-- Geschäftskunden verhalten sich unterschiedlich (E-Commerce = viele Pakete, Briefversender = viele Briefe) und
-  erhalten 10 % Rabatt auf Pakete.
-- **Saisonalität:** Spitzen im November (Black Friday) und Dezember (Weihnachten), wenig Aufträge an Sonntagen
-  und Feiertagen. Leichtes Wachstum über die Zeit, Briefanteil rückläufig.
-- Das **Produkt** passt zur Zone des Empfängers (ein Paket nach Deutschland ist immer ein Europa-Produkt), und das
-  **Gewicht** liegt in der Gewichtsklasse des Produkts.
-- **Zustellung:** Das Soll-Zustelldatum ergibt sich aus der Produktlaufzeit in Werktagen (ohne Wochenenden und
-  Feiertage). Rund 6 % der Sendungen sind verspätet, in der Vorweihnachtszeit und in Bergkantonen mehr. Dazu kommen
-  Retouren (Empfänger nicht angetroffen) und wenige verlorene Sendungen.
-- **Trackingnummern** folgen dem Aufbau der Post: Inland `99.60.123456.12345678` (Paket) bzw. `98.xx…` (Brief),
-  International im UPU-S10-Format inkl. Prüfziffer, z.B. `CP100002738CH`.
+- Kunden haben einen **bevorzugten Kanal**; digitale Kanäle gewinnen über die Jahre Anteile.
+- **Saisonalität:** Spitzen im November (Black Friday) und Dezember, wenig Aufträge an Sonn- und Feiertagen.
+  Der Briefanteil sinkt über die Zeit.
+- Das **Produkt** passt zur Zone des Empfängers, das **Gewicht** zur Gewichtsklasse des Produkts.
+- Das **Soll-Zustelldatum** ergibt sich aus der Produktlaufzeit in Werktagen. Rund 6 % der Sendungen sind verspätet,
+  vor Weihnachten mehr. Dazu kommen wenige Retouren und verlorene Sendungen.
+- **Trackingnummern** folgen dem Aufbau der Post, z.B. `99.60.123456.12345678` (Inland-Paket) oder `CP100002738CH`
+  (international, UPU-Format).
 
 Zeitraum: **01.01.2024 – 09.11.2026**, Datenstand (Stichtag) 10.11.2026.
 
@@ -339,36 +337,32 @@ Die Abfragen zum Erkennen dieser Probleme stehen in [`sql/05_pruefabfragen.sql`]
 
 | Rolle | Informationsbedarf |
 |---|---|
-| Geschäftsleitung Logistik | Entwicklung von Mengen und Umsatz, Strukturwandel Brief → Paket |
-| Produktmanagement | Welche Produkte und Services werden genutzt? |
-| Vertrieb / Key Account | Umsatz pro Kanal und Kundensegment, wichtigste Geschäftskunden |
-| Betrieb / Qualitätsmanagement | Pünktlichkeit (Laufzeit-Einhaltung), Retouren, Verluste |
+| Geschäftsleitung | Entwicklung von Mengen und Umsatz, Strukturwandel Brief → Paket |
+| Vertrieb | Umsatz pro Verkaufskanal und Kundentyp, Nutzung der digitalen Kanäle |
+| Betrieb / Qualitätsmanagement | Pünktlichkeit der Zustellung |
 
 ### 5.2 Steuerungskennzahlen (KPIs)
 
-| KPI | Definition | Granularität |
-|---|---|---|
-| Sendungsmenge | Anzahl Sendungen | Tag/Monat, Produkt, Kanal, Zone |
-| Umsatz CHF | Σ `preis_chf` | wie oben |
-| Ø Umsatz pro Sendung | Umsatz / Sendungsmenge | Produkt, Kundensegment |
-| Digitalisierungsgrad | Anteil Aufträge über digitale Kanäle | Monat, Kundentyp |
-| Pünktlichkeitsquote | Anteil zugestellter Sendungen mit `zustell_datum ≤ soll_zustell_datum` | Service, Zone, Zielland, Monat |
-| Ø Laufzeit | Werktage zwischen Aufgabe und Zustellung | Produkt, Zone |
-| Retourenquote | Anteil Sendungen mit Status RETOURNIERT | Produkt, Kunde |
+| KPI | Definition |
+|---|---|
+| Sendungsmenge | Anzahl Sendungen |
+| Umsatz CHF | Σ `preis_chf` der Sendungen |
+| Ø Umsatz pro Sendung | Umsatz / Sendungsmenge |
+| Digitalisierungsgrad | Anteil des Umsatzes über digitale Kanäle |
+| Pünktlichkeitsquote | Anteil zugestellter Sendungen mit `zustell_datum ≤ soll_zustell_datum` |
+
+Alle KPIs lassen sich nach Zeit (Jahr, Quartal, Monat), Produkt, Kanal, Kunde und Zielland auswerten.
 
 ### 5.3 Fragestellungen
 
-Diese Fragen soll das Datawarehouse beantworten. **F1 – F3 (mindestens) werden im Dashboard umgesetzt.**
+Diese drei Fragen beantwortet das Datawarehouse. Sie werden im Dashboard (Kapitel 9) umgesetzt.
 
-- **F1 – Strukturwandel Brief/Paket:** Wie entwickeln sich Sendungsmenge und Umsatz pro Sendungsart (Brief/Paket) und
-  Zone (Inland/Europa/Welt) von Monat zu Monat? Welche Saisonalität gibt es?
-- **F2 – Verkaufskanäle:** Welcher Umsatz fällt pro Verkaufskanal und Kundentyp an, und wie verändert sich der Anteil
-  digitaler Kanäle über die Zeit?
-- **F3 – Pünktlichkeit:** Wie hoch ist die Pünktlichkeitsquote pro Service (A-Post, B-Post, Priority, Economy) und
-  Zielzone? Sinkt sie in der Vorweihnachtszeit?
-- **F4 – Top-Geschäftskunden:** Welche 10 Geschäftskunden erzielen den höchsten Umsatz, und welchen Anteil am
-  Gesamtumsatz haben sie (ABC-Analyse)?
-- **F5 – Internationaler Versand:** In welche Länder wird am meisten versandt, und welcher Anteil entfällt auf Priority?
+- **F1 – Brief vs. Paket:** Wie entwickeln sich Sendungsmenge und Umsatz pro Sendungsart (Brief/Paket) von Monat zu
+  Monat? Welche Saisonalität gibt es?
+- **F2 – Verkaufskanäle:** Welcher Umsatz fällt pro Verkaufskanal und Kundentyp an, und wächst der Anteil der
+  digitalen Kanäle?
+- **F3 – Pünktlichkeit:** Wie hoch ist die Pünktlichkeitsquote pro Zone und Service (A-Post, B-Post, Priority,
+  Economy)? Sinkt sie in der Vorweihnachtszeit?
 
 ---
 
@@ -376,11 +370,11 @@ Diese Fragen soll das Datawarehouse beantworten. **F1 – F3 (mindestens) werden
 
 ### 6.1 Wahl des Geschäftsobjekts
 
-Wir wählen die **Sendung** als Geschäftsobjekt. Sie ist das zentrale Ereignis, an dem sich alle Fragen aus
-Kapitel 5 messen lassen (Menge, Umsatz, Laufzeit, Pünktlichkeit).
+Wir wählen die **Sendung** als Geschäftsobjekt. An ihr lassen sich alle Fragen aus Kapitel 5 messen (Menge, Umsatz,
+Pünktlichkeit).
 
 **Granularität (Grain):** Eine Zeile der Faktentabelle entspricht **einer Sendung**. Das ist die feinste verfügbare
-Granularität. Damit lassen sich alle Kennzahlen beliebig aggregieren.
+Granularität, damit lassen sich alle Kennzahlen beliebig aggregieren.
 
 ### 6.2 Sternschema
 
@@ -392,88 +386,72 @@ erDiagram
     DIM_KUNDE ||--o{ FACT_SENDUNG : "Absender"
     DIM_PRODUKT ||--o{ FACT_SENDUNG : "Produkt"
     DIM_KANAL ||--o{ FACT_SENDUNG : "Verkaufskanal"
-    DIM_ZIELGEBIET ||--o{ FACT_SENDUNG : "Empfängerort"
-    DIM_STATUS ||--o{ FACT_SENDUNG : "Sendungsstatus"
+    DIM_ZIELLAND ||--o{ FACT_SENDUNG : "Empfängerland"
 
     FACT_SENDUNG {
-        bigint sendung_key PK "Grain: 1 Zeile = 1 Sendung"
-        int datum_key FK
-        int kunde_key FK
-        int produkt_key FK
-        int kanal_key FK
-        int zielgebiet_key FK
-        int status_key FK
+        int auftrag_id PK "Grain: 1 Zeile = 1 Sendung"
+        int position_nr PK
+        int datum_key FK "YYYYMMDD"
+        int kunde_id FK
+        int produkt_id FK
+        int kanal_id FK
+        string land_code FK
         string tracking_nr "degenerierte Dimension"
+        string status "degenerierte Dimension"
         int anzahl_sendungen "Mass (immer 1)"
         decimal umsatz_chf "Mass, additiv"
         int gewicht_g "Mass, additiv"
-        int laufzeit_werktage "Mass, nicht additiv (Durchschnitt)"
-        int verspaetung_werktage "Mass, nicht additiv"
+        int laufzeit_werktage "Mass, nicht additiv"
         int puenktlich_flag "1 = bis Soll-Datum zugestellt"
     }
     DIM_DATUM {
         int datum_key PK "YYYYMMDD"
         date datum
-        int jahr
+        int jahr "Hierarchie: Jahr > Quartal > Monat > Tag"
         int quartal
         int monat
         string monat_name
-        int kalenderwoche
         string wochentag
-        boolean ist_werktag
-        boolean ist_weihnachtszeit
     }
     DIM_KUNDE {
-        int kunde_key PK
-        int kunde_id "Business Key"
+        int kunde_id PK
         string kundentyp "Hierarchie: Kundentyp > Kunde"
         string name "Firma bzw. Vor- und Nachname"
-        string plz
         string ort
-        string land_code
     }
     DIM_PRODUKT {
-        int produkt_key PK
-        int produkt_id "Business Key"
+        int produkt_id PK
         string produkt_name
         string sendungsart "Hierarchie: Sendungsart > Zone > Service > Produkt"
         string zone
         string service
-        int max_gewicht_g
         int laufzeit_soll_werktage
-        decimal listenpreis_chf
     }
     DIM_KANAL {
-        int kanal_key PK
-        int kanal_id "Business Key"
+        int kanal_id PK
         string kanal_name
         string kanal_typ "Hierarchie: Kanaltyp > Kanal"
     }
-    DIM_ZIELGEBIET {
-        int zielgebiet_key PK
-        string zone "Hierarchie: Zone > Land > Ort"
-        string land_code
+    DIM_ZIELLAND {
+        string land_code PK "XX = unbekannt"
         string land_name
-        string plz
-        string ort
-    }
-    DIM_STATUS {
-        int status_key PK
-        string status
-        boolean ist_abgeschlossen
+        string zone "Hierarchie: Zone > Land"
     }
 ```
 
+Die **Faktentabelle** `fact_sendung` enthält die Kennzahlen und die Schlüssel auf die Dimensionen. Die
+**Dimensionstabellen** beschreiben den Kontext einer Sendung: *wann* (Datum), *wer* (Kunde), *was* (Produkt),
+*wie gekauft* (Kanal) und *wohin* (Zielland).
+
 ### 6.3 Dimensionen und Hierarchien
 
-| Dimension | Hierarchie (grob → fein) | Wichtige Attribute |
+| Dimension | Hierarchie (grob → fein) | Quelle in `post_oltp` |
 |---|---|---|
-| Datum (Aufgabedatum) | Jahr → Quartal → Monat → Tag; Jahr → Kalenderwoche → Tag | Wochentag, Werktag ja/nein |
-| Kunde | Kundentyp → Kunde; Land → Ort → Kunde | |
-| Produkt | Sendungsart → Zone → Service → Produkt | Maximalgewicht, Soll-Laufzeit, Listenpreis |
-| Verkaufskanal | Kanaltyp (physisch/digital) → Kanal | |
-| Zielgebiet | Zone → Land → Ort/PLZ | |
-| Status | abgeschlossen ja/nein → Status | |
+| `dim_datum` (Aufgabedatum) | Jahr → Quartal → Monat → Tag | generiert (Kalender) |
+| `dim_kunde` | Kundentyp → Kunde | `kunde` |
+| `dim_produkt` | Sendungsart → Zone → Service → Produkt | `produkt` |
+| `dim_kanal` | Kanaltyp (physisch/digital) → Kanal | `verkaufskanal` |
+| `dim_zielland` | Zone → Land | `land` (über `empfaenger`) |
 
 ### 6.4 Kennzahlen (Fakten)
 
@@ -481,17 +459,19 @@ erDiagram
 |---|---|---|
 | `anzahl_sendungen` | additiv | immer 1, vereinfacht das Zählen |
 | `umsatz_chf` | additiv | |
-| `gewicht_g` | additiv | |
-| `laufzeit_werktage`, `verspaetung_werktage` | nicht additiv | nur Durchschnitt/Median sinnvoll |
-| `puenktlich_flag` | semi-additiv | Summe/Anzahl = Pünktlichkeitsquote |
+| `gewicht_g` | additiv | NULL, wenn die DQ-Prüfung fehlschlägt |
+| `laufzeit_werktage` | nicht additiv | nur Durchschnitt sinnvoll |
+| `puenktlich_flag` | semi-additiv | 1 = pünktlich, 0 = verspätet, NULL = nicht zugestellt; Durchschnitt = Pünktlichkeitsquote |
 
 **Designentscheide**
 
-- `tracking_nr` bleibt als **degenerierte Dimension** in der Faktentabelle (für den Drill-through zur einzelnen Sendung).
-- Der Absender-Ort liegt in `dim_kunde`, der Empfänger-Ort in `dim_zielgebiet`. So lassen sich Versandströme
-  (von → nach) analysieren.
-- **Historisierung:** Für `dim_kunde` wäre eine SCD Typ 2 sinnvoll (z.B. bei Umzug). Im Rahmen dieser Arbeit
-  setzen wir SCD Typ 1 (Überschreiben) um. *(TODO: definitiv entscheiden)*
+- **Schlüssel:** Die Dimensionen verwenden die Schlüssel aus der operativen DB (`kunde_id`, `produkt_id` …), der
+  Datumsschlüssel hat das Format `YYYYMMDD`. Da wir nicht historisieren (SCD Typ 1, d.h. Änderungen überschreiben),
+  braucht es keine zusätzlichen Surrogatschlüssel.
+- `tracking_nr` und `status` bleiben als **degenerierte Dimensionen** direkt in der Faktentabelle. Für zwei Attribute
+  lohnt sich keine eigene Dimensionstabelle.
+- **Unbekannte Werte:** Sendungen mit fehlendem Empfänger (DQ-Problem) werden dem Zielland `XX – Unbekannt`
+  zugeordnet, damit ihr Umsatz nicht verloren geht.
 
 ---
 
@@ -501,76 +481,77 @@ Quelle: [`docs/diagramme/medaillon_architektur.mmd`](../docs/diagramme/medaillon
 
 ```mermaid
 flowchart LR
-    SRC[("Operative DB<br/>post_oltp")] -->|Extract| B["Bronze<br/>post_dwh_bronze<br/>1:1-Kopie + Lademetadaten"]
-    B -->|"Clean + DQ"| S["Silver<br/>post_dwh_silver<br/>bereinigt, standardisiert,<br/>DQ-Flags, Quarantäne"]
-    S -->|"Transform"| G["Gold<br/>post_dwh_gold<br/>Sternschema + KPI-Views"]
-    G --> D["Dashboard"]
+    SRC[("Operative DB<br/>post_oltp<br/>7 Tabellen")]
+    B["Bronze<br/>post_dwh_bronze<br/>1:1-Kopie + Ladezeitpunkt"]
+    S["Silver<br/>post_dwh_silver<br/>bereinigt, DQ-Flags,<br/>dq_protokoll"]
+    G["Gold<br/>post_dwh_gold<br/>Sternschema"]
+    D["Dashboard"]
+
+    SRC -->|"10_bronze_laden"| B
+    B -->|"20_silver_bereinigen"| S
+    S -->|"30_gold_sternschema"| G
+    G --> D
 ```
 
-| Schicht | Schema | Inhalt | Ladeart |
+| Schicht | Schema | Inhalt | ETL-Notebook |
 |---|---|---|---|
-| Bronze | `post_dwh_bronze` | Unveränderte Kopie aller OLTP-Tabellen, ergänzt um `_ladezeitpunkt` und `_quelle` | Full Load (Overwrite) |
-| Silver | `post_dwh_silver` | Bereinigte, typisierte, standardisierte Daten; jede Zeile mit DQ-Ergebnis; fehlerhafte Zeilen in Quarantäne-Tabellen | Full Load bzw. `MERGE` |
-| Gold | `post_dwh_gold` | Sternschema (Fakten und Dimensionen) sowie aggregierte Sichten für das Dashboard | Full Load |
+| Bronze | `post_dwh_bronze` | Unveränderte Kopie der 7 OLTP-Tabellen, ergänzt um den Ladezeitpunkt `_geladen_am` | `10_bronze_laden` |
+| Silver | `post_dwh_silver` | Bereinigte und standardisierte Daten, jede Sendung mit DQ-Flags; Protokolltabelle `dq_protokoll` | `20_silver_bereinigen` |
+| Gold | `post_dwh_gold` | Sternschema (Kapitel 6) als Grundlage für das Dashboard | `30_gold_sternschema` |
 
-> **TODO (Team):** ETL-Notebooks in `databricks/` erstellen und hier beschreiben:
-> - `10_bronze_laden` – Kopie per `CREATE OR REPLACE TABLE … AS SELECT *, current_timestamp() AS _ladezeitpunkt …`
-> - `20_silver_bereinigen` – Standardisierung (Ort-Mapping, PLZ, E-Mail, Trim/Upper), DQ-Prüfungen, Quarantäne
-> - `30_gold_sternschema` – Dimensionen mit Surrogatschlüsseln, `dim_datum` per `sequence()`, `fact_sendung`
-> - Ablauf als Databricks *Job* (optional) und Screenshots der Lineage im Catalog Explorer.
+Alle Schichten werden bei jedem Lauf vollständig neu geladen (*Full Load* mit `CREATE OR REPLACE TABLE … AS SELECT`).
+Für die kleine Datenmenge ist das am einfachsten und robust. Inkrementelles Laden wäre eine mögliche Erweiterung.
+
+> **TODO (Team):** Nach dem Umsetzen kurz beschreiben, was jedes Notebook macht (mit einem SQL-Auszug), und einen
+> Screenshot der drei Schemas im Catalog Explorer einfügen.
 
 ---
 
 ## 8. Datenqualitätsprüfungen im ETL-Prozess
 
-Gefordert sind mindestens zwei sinnvolle Prüfungen. Wir sehen folgende Prüfungen im Silver-Layer vor. Die Spalte
-*Reaktion* beschreibt, was mit fehlerhaften Datensätzen passiert.
+Die Prüfungen laufen im Silver-Layer (Notebook `20_silver_bereinigen`). Gefordert sind mindestens zwei, wir setzen
+vier um:
 
-| ID | Prüfung (Dimension der Datenqualität) | Regel | Reaktion |
+| ID | Prüfung | Regel | Reaktion |
 |---|---|---|---|
-| P1 | **Referentielle Integrität** (Konsistenz) | Jede `sendung.empfaenger_id` existiert in `empfaenger` | Sendung in Quarantäne. In der Faktentabelle wird sie dem Dummy-Mitglied „Unbekannt“ (Key −1) zugeordnet, damit der Umsatz nicht verloren geht. |
-| P2 | **Plausibilität** Gewicht (Korrektheit) | `gewicht_g > 0` und `gewicht_g ≤ produkt.max_gewicht_g` | Flag `dq_gewicht_ok = false`. Sendung zählt im Umsatz, wird aber nicht für Gewichtsauswertungen verwendet. |
-| P3 | **Plausibilität** Zeitreihenfolge (Konsistenz) | `zustell_datum ≥ aufgabe_datum` | Laufzeit/Pünktlichkeit = NULL, Datensatz in Quarantäne-Report |
-| P4 | **Formatprüfung** (Gültigkeit) | E-Mail per Regex, CH-PLZ 4-stellig | Wert normieren, sonst NULL setzen und flaggen |
-| P5 | **Abstimmung** (Vollständigkeit/Konsistenz) | `auftrag.betrag_total_chf = Σ sendung.preis_chf` | Abweichung protokollieren; im DWH gilt die Summe der Sendungen |
-| P6 | **Eindeutigkeit** | `tracking_nr` eindeutig; Kunden-Dubletten (Name + Strasse) | Dubletten markieren (`master_kunde_id`) |
-| P7 | **Vollständigkeit** Ladeprüfung | Zeilenzahl Bronze = Zeilenzahl Quelle | Job bricht ab, wenn Abweichung |
+| P1 | **Referentielle Integrität** | Jede `sendung.empfaenger_id` existiert in `empfaenger` | Sendung bleibt erhalten, Zielland = „Unbekannt“ |
+| P2 | **Plausibilität Gewicht** | `gewicht_g > 0` und `≤ produkt.max_gewicht_g` | Gewicht wird auf NULL gesetzt, Umsatz zählt weiterhin |
+| P3 | **Plausibilität Datum** | `zustell_datum ≥ aufgabe_datum` | Laufzeit und Pünktlichkeit = NULL (fliesst nicht in die Quote ein) |
+| P4 | **Abstimmung Auftragstotal** | `auftrag.betrag_total_chf = Σ sendung.preis_chf` | Abweichung wird protokolliert; im DWH gilt die Summe der Sendungen |
 
-Ergebnisse jeder Prüfung schreiben wir in eine Protokolltabelle `post_dwh_silver.dq_protokoll`
-(Ladezeitpunkt, Prüfung, Tabelle, Anzahl geprüft, Anzahl fehlerhaft).
+Zusätzlich werden Ortsnamen vereinheitlicht (z.B. „Zuerich“ → „Zürich“) und E-Mail-Adressen getrimmt und klein
+geschrieben.
 
-> **TODO (Team):** Mindestens P1 und P2 (besser P1–P5) umsetzen. Resultate (Anzahl gefundener Fehler, vgl. Tabelle in
-> 4.3) und Screenshot des DQ-Protokolls einfügen. Optional: Delta *Expectations* in einer Lakeflow/DLT-Pipeline.
+Jede Prüfung schreibt eine Zeile in die Protokolltabelle `post_dwh_silver.dq_protokoll` (Ladezeitpunkt, Prüfung,
+Anzahl geprüft, Anzahl fehlerhaft). Die erwarteten Fehlerzahlen entsprechen den eingebauten Problemen aus Kapitel 4.3
+(P1: 12, P2: 153, P3: 19, P4: 43).
+
+> **TODO (Team):** Screenshot des DQ-Protokolls nach dem Lauf einfügen.
 
 ---
 
 ## 9. Auswertungsdashboard
 
 > **TODO (Team):** Dashboard in **Databricks AI/BI Dashboard** (oder Power BI) auf Basis von `post_dwh_gold` erstellen.
-> Für jede Frage: Screenshot, verwendete Abfrage und Interpretation (2–4 Sätze).
+> Pro Frage einen Screenshot und 2–3 Sätze Interpretation einfügen.
 
 | Frage | Visualisierung (Vorschlag) |
 |---|---|
-| F1 Strukturwandel Brief/Paket | Liniendiagramm Sendungen pro Monat, Farbe = Sendungsart; gestapelte Balken Umsatz nach Zone |
-| F2 Verkaufskanäle | Balken Umsatz pro Kanal (Farbe Kundentyp); Linie Anteil digitaler Kanäle pro Quartal |
-| F3 Pünktlichkeit | Balken Pünktlichkeitsquote pro Service; Linie pro Monat (Dezember-Effekt sichtbar) |
-| F4 Top-Geschäftskunden | Tabelle Top 10 + Pareto-Diagramm |
-| F5 International | Karte bzw. Balken nach Land, Anteil Priority |
+| F1 Brief vs. Paket | Liniendiagramm Sendungen pro Monat, Farbe = Sendungsart; Balken Umsatz pro Sendungsart und Jahr |
+| F2 Verkaufskanäle | Balken Umsatz pro Kanal (Farbe = Kundentyp); Linie Anteil digitaler Kanäle pro Quartal |
+| F3 Pünktlichkeit | Balken Pünktlichkeitsquote pro Zone und Service; Linie Pünktlichkeit pro Monat |
 
-Erste Beobachtungen aus der operativen DB (Prüfabfragen, vor DWH):
+Erste Beobachtungen aus den Prüfabfragen der operativen DB:
 
 - Pakete machen rund 60 % der Sendungen, aber über 90 % des Umsatzes aus.
-- Deutlicher Peak im Dezember (2025: rund 1.6× so viele Sendungen wie im Juni).
+- Im Dezember werden deutlich mehr Sendungen aufgegeben (2025: rund 1.6× so viele wie im Juni).
 - Die Pünktlichkeit liegt im Inland bei rund 94–97 %, international bei 76–87 %.
 
 ---
 
 ## 10. Fazit und Reflexion
 
-> **TODO (Team):** Am Schluss schreiben, z.B.:
-> - Was hat gut funktioniert (Generator, Git-Workflow mit zwei Free-Edition-Workspaces)?
-> - Grenzen: synthetische Daten, informative Constraints in Databricks, kein inkrementelles Laden
-> - Mögliche Erweiterungen: Sendungsverfolgung (Tracking-Ereignisse), Zusatzleistungen, SCD Typ 2, inkrementelles Laden mit Change Data Feed
+> **TODO (Dominik, Joel):** Fazit und Reflexion schreiben wir selbst.
 
 ---
 
@@ -582,7 +563,6 @@ Erste Beobachtungen aus der operativen DB (Prüfabfragen, vor DWH):
 |---|---|
 | `bericht.pdf` | Dieser Bericht |
 | `post_leistungsnachweis.dbc` | Databricks-Export: SQL-Notebooks (`sql/`) und ETL-Notebooks (`databricks/`) |
-| `*.pbix` (optional) | Power-BI-Dashboard |
 | `INSTALL.md` | Installationsanleitung |
 | `docs/diagramme/*.mmd` | Mermaid-Quellen der Diagramme |
 | `scripts/generate_data.py` | Datengenerator |
@@ -594,5 +574,11 @@ ausführen, danach die ETL-Notebooks in `databricks/` in nummerierter Reihenfolg
 
 ### 11.3 Verwendung von KI-Werkzeugen
 
-> **TODO:** Gemäss ZHAW-Richtlinien deklarieren, wofür KI-Werkzeuge verwendet wurden (z.B. Datengenerator,
-> Entwurf der Berichtsstruktur) und wie die Resultate geprüft wurden.
+Wir haben den KI-Assistenten **Claude** (Anthropic) unterstützend eingesetzt, und zwar für:
+
+- das Erstellen des SQL-Schemas der operativen Datenbank (`sql/01_create_schema.sql`) und
+- das Generieren der Testdaten, mit denen die Datenbank befüllt wird (Datengenerator `scripts/generate_data.py`
+  und die daraus erzeugten INSERT-Skripte).
+
+Die Vorgaben (Szenario, Entitäten, Umfang) kamen von uns. Die Resultate haben wir geprüft, indem wir die Skripte in
+Databricks ausgeführt und die Daten mit den Prüfabfragen (`sql/05_pruefabfragen.sql`) kontrolliert haben.
