@@ -29,8 +29,10 @@ erDiagram
         date datum
         int jahr "Hierarchie: Jahr > Quartal > Monat > Tag"
         int quartal
+        string jahr_quartal
         int monat
         string monat_name
+        date monat_start
         string wochentag
     }
     DIM_KUNDE {
@@ -38,6 +40,7 @@ erDiagram
         string kundentyp "Hierarchie: Kundentyp > Kunde"
         string name "Firma bzw. Vor- und Nachname"
         string ort
+        string land_code
     }
     DIM_PRODUKT {
         int produkt_id PK

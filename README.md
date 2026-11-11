@@ -21,7 +21,7 @@ Wir bauen eine kleine operative Datenbank, darauf ein Datawarehouse in der **Med
 | [`sql/05_pruefabfragen.sql`](sql/05_pruefabfragen.sql) | Zeilenzahlen, Datenqualitäts-Checks, Beispielabfragen |
 | [`sql/00_setup_alles.sql`](sql/00_setup_alles.sql) | Führt alle Skripte in der richtigen Reihenfolge aus |
 | [`scripts/generate_data.py`](scripts/generate_data.py) | Datengenerator (Python, deterministisch) |
-| `databricks/` | *(folgt)* ETL-Notebooks Bronze/Silver/Gold und Dashboard-Abfragen |
+| [`databricks/`](databricks) | ETL-Notebooks Bronze → Silver → Gold (`10`–`30`), Dashboard-Sichten (`40`), Gesamtlauf `00_etl_alles` |
 
 Alle `.sql`-Dateien sind gleichzeitig **Databricks-Notebooks im Quellformat**. Sie lassen sich direkt als Notebook
 importieren oder über einen Databricks-Git-Ordner öffnen.
@@ -31,6 +31,8 @@ importieren oder über einen Databricks-Git-Ordner öffnen.
 1. Databricks: **Workspace → Create → Git folder** → URL dieses Repos.
 2. `sql/00_setup_alles` öffnen → **Run all**.
 3. Kontrolle in `sql/05_pruefabfragen`.
+4. `databricks/00_etl_alles` öffnen → **Run all** (Datawarehouse laden).
+5. Dashboard gemäss [INSTALL.md](INSTALL.md), Kapitel 7, erstellen.
 
 Details: [INSTALL.md](INSTALL.md).
 

@@ -409,8 +409,10 @@ erDiagram
         date datum
         int jahr "Hierarchie: Jahr > Quartal > Monat > Tag"
         int quartal
+        string jahr_quartal
         int monat
         string monat_name
+        date monat_start
         string wochentag
     }
     DIM_KUNDE {
@@ -418,6 +420,7 @@ erDiagram
         string kundentyp "Hierarchie: Kundentyp > Kunde"
         string name "Firma bzw. Vor- und Nachname"
         string ort
+        string land_code
     }
     DIM_PRODUKT {
         int produkt_id PK
@@ -502,8 +505,31 @@ flowchart LR
 Alle Schichten werden bei jedem Lauf vollständig neu geladen (*Full Load* mit `CREATE OR REPLACE TABLE … AS SELECT`).
 Für die kleine Datenmenge ist das am einfachsten und robust. Inkrementelles Laden wäre eine mögliche Erweiterung.
 
-> **TODO (Team):** Nach dem Umsetzen kurz beschreiben, was jedes Notebook macht (mit einem SQL-Auszug), und einen
-> Screenshot der drei Schemas im Catalog Explorer einfügen.
+Die ETL-Notebooks liegen im Ordner [`databricks/`](../databricks). `00_etl_alles` führt sie in der richtigen
+Reihenfolge aus.
+
+- **`10_bronze_laden`** kopiert jede Tabelle mit `CREATE OR REPLACE TABLE post_dwh_bronze.<tabelle> AS SELECT *,
+  current_timestamp() AS _geladen_am FROM post_oltp.<tabelle>` und vergleicht anschliessend die Zeilenzahlen von
+  Quelle und Bronze (Ladekontrolle).
+- **`20_silver_bereinigen`** standardisiert die Daten (Ortsnamen, E-Mail), führt die Prüfungen P1–P4 aus
+  (Kapitel 8), setzt die DQ-Flags und schreibt das DQ-Protokoll.
+- **`30_gold_sternschema`** erzeugt `dim_datum` als Kalender (`sequence()` über alle Tage 2024–2026), übernimmt die
+  übrigen Dimensionen aus Silver und baut `fact_sendung`. Die Laufzeit in Werktagen und das Pünktlichkeits-Flag
+  werden dabei berechnet. Eine Kontrollabfrage stellt sicher, dass jede Sendung genau einmal in den Fakten ist und
+  jeder Fremdschlüssel eine Dimension findet.
+- **`40_dashboard_views`** legt pro Fragestellung eine Sicht für das Dashboard an (Kapitel 9).
+
+Auszug aus `30_gold_sternschema` (Berechnung der Pünktlichkeit):
+
+```sql
+CASE
+  WHEN s.status = 'ZUGESTELLT' AND s.zustell_datum IS NOT NULL
+    THEN CASE WHEN s.zustell_datum <= s.soll_zustell_datum THEN 1 ELSE 0 END
+END AS puenktlich_flag
+```
+
+> **TODO (Team):** Screenshot der Schemas `post_dwh_bronze`, `post_dwh_silver` und `post_dwh_gold` im Catalog
+> Explorer einfügen.
 
 ---
 
@@ -522,9 +548,20 @@ vier um:
 Zusätzlich werden Ortsnamen vereinheitlicht (z.B. „Zuerich“ → „Zürich“) und E-Mail-Adressen getrimmt und klein
 geschrieben.
 
-Jede Prüfung schreibt eine Zeile in die Protokolltabelle `post_dwh_silver.dq_protokoll` (Ladezeitpunkt, Prüfung,
-Anzahl geprüft, Anzahl fehlerhaft). Die erwarteten Fehlerzahlen entsprechen den eingebauten Problemen aus Kapitel 4.3
-(P1: 12, P2: 153, P3: 19, P4: 43).
+Jede Prüfung schreibt pro Lauf eine Zeile in die Protokolltabelle `post_dwh_silver.dq_protokoll` (Ladezeitpunkt,
+Prüfung, Anzahl geprüft, Anzahl fehlerhaft). Die Tabelle wird nicht überschrieben, so bleibt die Entwicklung der
+Datenqualität über mehrere Läufe sichtbar. Ergebnis eines Laufs:
+
+| Prüfung | Tabelle | geprüft | fehlerhaft | Anteil |
+|---|---|---:|---:|---:|
+| P1 Referentielle Integrität Empfänger | sendung | 12'134 | 12 | 0.10 % |
+| P2 Plausibilität Gewicht | sendung | 12'134 | 153 | 1.26 % |
+| P3 Plausibilität Zustelldatum | sendung | 12'134 | 19 | 0.16 % |
+| P4 Abstimmung Auftragstotal | auftrag | 5'687 | 43 | 0.76 % |
+| Info: Ort vereinheitlicht | kunde | 658 | 10 | 1.52 % |
+| Info: E-Mail fehlt oder ungültig | kunde | 658 | 20 | 3.04 % |
+
+Die Prüfungen finden genau die in Kapitel 4.3 eingebauten Probleme (P2 = 109 zu schwere + 44 fehlende Gewichte).
 
 > **TODO (Team):** Screenshot des DQ-Protokolls nach dem Lauf einfügen.
 
@@ -532,20 +569,25 @@ Anzahl geprüft, Anzahl fehlerhaft). Die erwarteten Fehlerzahlen entsprechen den
 
 ## 9. Auswertungsdashboard
 
-> **TODO (Team):** Dashboard in **Databricks AI/BI Dashboard** (oder Power BI) auf Basis von `post_dwh_gold` erstellen.
-> Pro Frage einen Screenshot und 2–3 Sätze Interpretation einfügen.
+Das Dashboard ist als **Databricks AI/BI Dashboard** umgesetzt. Es liest ausschliesslich aus dem Gold-Layer. Für
+jede Fragestellung gibt es eine Sicht in `post_dwh_gold` (Notebook `40_dashboard_views`), die das Dashboard als
+Datenquelle verwendet. So ist die Abfragelogik im Repository versioniert.
 
-| Frage | Visualisierung (Vorschlag) |
-|---|---|
-| F1 Brief vs. Paket | Liniendiagramm Sendungen pro Monat, Farbe = Sendungsart; Balken Umsatz pro Sendungsart und Jahr |
-| F2 Verkaufskanäle | Balken Umsatz pro Kanal (Farbe = Kundentyp); Linie Anteil digitaler Kanäle pro Quartal |
-| F3 Pünktlichkeit | Balken Pünktlichkeitsquote pro Zone und Service; Linie Pünktlichkeit pro Monat |
+| Frage | Sicht | Visualisierung |
+|---|---|---|
+| Kennzahlen | `v_kpi_uebersicht` | Kacheln: Sendungen, Umsatz, Ø Umsatz/Sendung, Anteil digital, Pünktlichkeit |
+| F1 Brief vs. Paket | `v_f1_brief_paket_monat` | Linie: Sendungen pro Monat, Farbe = Sendungsart; Balken: Umsatz pro Jahr und Sendungsart |
+| F2 Verkaufskanäle | `v_f2_umsatz_kanal`, `v_f2_digital_quartal` | Balken: Umsatz pro Kanal, Farbe = Kundentyp; Linie: Anteil digital pro Quartal |
+| F3 Pünktlichkeit | `v_f3_puenktlichkeit_service`, `v_f3_puenktlichkeit_monat` | Balken: Quote pro Zone und Service; Linie: Quote pro Monat, Farbe = Zone |
 
-Erste Beobachtungen aus den Prüfabfragen der operativen DB:
+> **TODO (Team):** Pro Frage einen Screenshot des Dashboards und 2–3 Sätze Interpretation einfügen.
+
+Erste Beobachtungen aus den Daten (als Grundlage für die Interpretation):
 
 - Pakete machen rund 60 % der Sendungen, aber über 90 % des Umsatzes aus.
 - Im Dezember werden deutlich mehr Sendungen aufgegeben (2025: rund 1.6× so viele wie im Juni).
-- Die Pünktlichkeit liegt im Inland bei rund 94–97 %, international bei 76–87 %.
+- Die Pünktlichkeit liegt im Inland bei rund 94–97 %, international bei 76–87 % (gesamt 93.8 %).
+- Der Anteil digitaler Kanäle liegt bei rund 55–65 % des Umsatzes und schwankt stark von Quartal zu Quartal.
 
 ---
 
