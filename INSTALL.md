@@ -32,12 +32,12 @@ Die Abgabe enthält eine **Databricks-Exportdatei** (`.dbc`) mit allen Notebooks
 
    | Reihenfolge | Notebook | Zweck | Dauer ca. |
    |---|---|---|---|
-   | 1 | `sql/00_setup_alles` | Führt 01–06 automatisch nacheinander aus | 3–6 min |
-   | – | *(alternativ einzeln:)* `01_create_schema` … `06_pruefabfragen` | | |
+   | 1 | `sql/00_setup_alles` | Führt 01–05 automatisch nacheinander aus | 1–2 min |
+   | – | *(alternativ einzeln:)* `01_create_schema` … `05_pruefabfragen` | | |
    | 2 | `databricks/…` | ETL Bronze → Silver → Gold *(folgt)* | |
    | 3 | Dashboard | *(folgt)* | |
 
-4. Kontrolle: Im Notebook `06_pruefabfragen` müssen die Zeilenzahlen gemäss Kapitel 5 erscheinen.
+4. Kontrolle: Im Notebook `05_pruefabfragen` müssen die Zeilenzahlen gemäss Kapitel 5 erscheinen.
 
 ---
 
@@ -69,8 +69,8 @@ man im Editor lesen oder in einem anderen SQL-Tool ausführen kann.
 
 ### B3. Nur SQL-Editor (Fallback)
 
-Jede Datei kann auch im **SQL Editor** geöffnet und mit *Run all* ausgeführt werden (Reihenfolge 01 → 06).
-Die grossen Insert-Dateien (> 1 MB) sind dort allerdings träge. Die Notebook-Variante ist deshalb vorzuziehen.
+Jede Datei kann auch im **SQL Editor** geöffnet und mit *Run all* ausgeführt werden (Reihenfolge 01 → 05).
+Die grosse Insert-Datei `04_…` (ca. 1.7 MB) ist dort allerdings träge. Die Notebook-Variante ist deshalb vorzuziehen.
 
 ---
 
@@ -88,28 +88,23 @@ USE CATALOG <mein_katalog>;
 
 ## 5. Erwartete Zeilenzahlen
 
-Nach erfolgreichem Setup liefert `06_pruefabfragen` folgende Werte:
+Nach erfolgreichem Setup liefert `05_pruefabfragen` folgende Werte:
 
 | Tabelle | Zeilen |
 |---|---:|
 | land | 24 |
 | verkaufskanal | 7 |
 | produkt | 37 |
-| zusatzleistung | 6 |
-| standort | 175 |
-| adresse | 3'650 |
 | kunde | 658 |
 | empfaenger | 3'000 |
-| auftrag | 5'887 |
-| sendung | 12'561 |
-| sendung_zusatzleistung | 1'934 |
-| tracking_event | 53'157 |
+| auftrag | 5'687 |
+| sendung | 12'134 |
 
 ---
 
 ## 6. Beispieldaten neu generieren (optional)
 
-Die Insert-Skripte `02`–`05` werden durch `scripts/generate_data.py` erzeugt. Der Zufallsgenerator hat einen fixen Seed,
+Die Insert-Skripte `02`–`04` werden durch `scripts/generate_data.py` erzeugt. Der Zufallsgenerator hat einen fixen Seed,
 deshalb entstehen bei jedem Lauf **identische** Daten.
 
 ```bash
@@ -117,8 +112,7 @@ python scripts/generate_data.py
 ```
 
 Der Generator benötigt nur die Python-Standardbibliothek. Er gibt am Ende eine Zusammenfassung aus (Zeilen pro Tabelle,
-Anzahl eingebauter Datenqualitätsprobleme). Werden Mengen oder Seed geändert, kann sich die Aufteilung der Dateien
-(`05_insert_tracking_teilN.sql`) ändern. In diesem Fall die `%run`-Zellen in `00_setup_alles.sql` anpassen.
+Anzahl eingebauter Datenqualitätsprobleme).
 
 ---
 

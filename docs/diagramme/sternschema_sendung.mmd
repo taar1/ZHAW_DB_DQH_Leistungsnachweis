@@ -20,10 +20,7 @@ erDiagram
         string tracking_nr "degenerierte Dimension"
         int anzahl_sendungen "Mass (immer 1)"
         decimal umsatz_chf "Mass, additiv"
-        decimal listenpreis_chf "Mass, additiv"
-        decimal rabatt_chf "Mass, additiv"
         int gewicht_g "Mass, additiv"
-        int anzahl_zusatzleistungen "Mass, additiv"
         int laufzeit_werktage "Mass, nicht additiv (Durchschnitt)"
         int verspaetung_werktage "Mass, nicht additiv"
         int puenktlich_flag "1 = bis Soll-Datum zugestellt"
@@ -42,42 +39,37 @@ erDiagram
     }
     DIM_KUNDE {
         int kunde_key PK
-        string kundennummer
-        string kundentyp "Hierarchie: Kundentyp > Profil > Kunde"
-        string geschaeftsprofil
+        int kunde_id "Business Key"
+        string kundentyp "Hierarchie: Kundentyp > Kunde"
         string name "Firma bzw. Vor- und Nachname"
+        string plz
         string ort
-        string kanton
-        string region
-        string altersgruppe
-        decimal rabatt_prozent
+        string land_code
     }
     DIM_PRODUKT {
         int produkt_key PK
-        string produkt_code
+        int produkt_id "Business Key"
         string produkt_name
         string sendungsart "Hierarchie: Sendungsart > Zone > Service > Produkt"
         string zone
         string service
-        string format
+        int max_gewicht_g
         int laufzeit_soll_werktage
         decimal listenpreis_chf
     }
     DIM_KANAL {
         int kanal_key PK
-        string kanal_code
+        int kanal_id "Business Key"
         string kanal_name
         string kanal_typ "Hierarchie: Kanaltyp > Kanal"
     }
     DIM_ZIELGEBIET {
         int zielgebiet_key PK
-        string plz
-        string ort
-        string kanton
-        string region "Hierarchie: Zone > Land > Region > Kanton > Ort"
+        string zone "Hierarchie: Zone > Land > Ort"
         string land_code
         string land_name
-        string zone
+        string plz
+        string ort
     }
     DIM_STATUS {
         int status_key PK

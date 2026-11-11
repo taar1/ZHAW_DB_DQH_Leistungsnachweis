@@ -16,9 +16,9 @@ Wir bauen eine kleine operative Datenbank, darauf ein Datawarehouse in der **Med
 | [`INSTALL.md`](INSTALL.md) | Installationsanleitung (Team und Dozent/in) |
 | [`bericht/bericht.md`](bericht/bericht.md) | Bericht (Markdown, wird am Schluss als PDF exportiert) |
 | [`docs/diagramme/`](docs/diagramme) | Mermaid-Diagramme: ER-Modell, Sternschema, Medaillon-Architektur |
-| [`sql/01_create_schema.sql`](sql/01_create_schema.sql) | DDL der operativen Datenbank `post_oltp` (12 Tabellen inkl. PK/FK) |
-| `sql/02_…` – `sql/05_…` | Beispieldaten als INSERT-Skripte (generiert) |
-| [`sql/06_pruefabfragen.sql`](sql/06_pruefabfragen.sql) | Zeilenzahlen, Datenqualitäts-Checks, Beispielabfragen |
+| [`sql/01_create_schema.sql`](sql/01_create_schema.sql) | DDL der operativen Datenbank `post_oltp` (7 Tabellen inkl. PK/FK) |
+| `sql/02_…` – `sql/04_…` | Beispieldaten als INSERT-Skripte (generiert) |
+| [`sql/05_pruefabfragen.sql`](sql/05_pruefabfragen.sql) | Zeilenzahlen, Datenqualitäts-Checks, Beispielabfragen |
 | [`sql/00_setup_alles.sql`](sql/00_setup_alles.sql) | Führt alle Skripte in der richtigen Reihenfolge aus |
 | [`scripts/generate_data.py`](scripts/generate_data.py) | Datengenerator (Python, deterministisch) |
 | `databricks/` | *(folgt)* ETL-Notebooks Bronze/Silver/Gold und Dashboard-Abfragen |
@@ -30,7 +30,7 @@ importieren oder über einen Databricks-Git-Ordner öffnen.
 
 1. Databricks: **Workspace → Create → Git folder** → URL dieses Repos.
 2. `sql/00_setup_alles` öffnen → **Run all**.
-3. Kontrolle in `sql/06_pruefabfragen`.
+3. Kontrolle in `sql/05_pruefabfragen`.
 
 Details: [INSTALL.md](INSTALL.md).
 

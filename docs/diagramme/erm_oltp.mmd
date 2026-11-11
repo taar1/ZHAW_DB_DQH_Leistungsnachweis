@@ -2,103 +2,60 @@
 title: ER-Modell operative Datenbank post_oltp (Schweizer Post – Brief- und Paketversand)
 ---
 erDiagram
-    LAND ||--o{ ADRESSE : "liegt in"
-    LAND ||--o{ STANDORT : "liegt in"
-    ADRESSE ||--o{ KUNDE : "ist Domizil von"
-    ADRESSE ||--o{ EMPFAENGER : "ist Zustelladresse von"
+    LAND ||--o{ KUNDE : "Wohnsitz/Sitz von"
+    LAND ||--o{ EMPFAENGER : "Zielland von"
     KUNDE ||--o{ AUFTRAG : "erteilt"
     VERKAUFSKANAL ||--o{ AUFTRAG : "wird verkauft über"
-    STANDORT |o--o{ AUFTRAG : "Aufgabestelle (nur physisch)"
     AUFTRAG ||--|{ SENDUNG : "umfasst (ID-Beziehung)"
     PRODUKT ||--o{ SENDUNG : "wird versandt als"
     EMPFAENGER ||--o{ SENDUNG : "empfängt"
-    SENDUNG ||--o{ SENDUNG_ZUSATZLEISTUNG : "hat"
-    ZUSATZLEISTUNG ||--o{ SENDUNG_ZUSATZLEISTUNG : "wird gebucht in"
-    SENDUNG ||--|{ TRACKING_EVENT : "wird verfolgt durch (ID-Beziehung)"
-    STANDORT |o--o{ TRACKING_EVENT : "Ort des Ereignisses"
 
     LAND {
         string land_code PK "ISO-Code"
         string land_name
         string zone "CH / EUROPA / WELT"
     }
-    ADRESSE {
-        int adresse_id PK
-        string strasse
-        string hausnummer
-        string plz
-        string ort
-        string kanton
-        string land_code FK
-    }
     KUNDE {
         int kunde_id PK
-        string kundennummer UK
         string kundentyp "PRIVAT / GESCHAEFT"
-        string geschaeftsprofil
-        string anrede
         string vorname
         string nachname
-        string firmenname
+        string firmenname "nur Geschäftskunden"
         string email
-        string telefon
-        date geburtsdatum
-        decimal rabatt_prozent
+        string strasse
+        string plz
+        string ort
+        string land_code FK
         date registriert_am
-        int adresse_id FK
     }
     VERKAUFSKANAL {
         int kanal_id PK
-        string kanal_code UK
         string kanal_name
         string kanal_typ "PHYSISCH / DIGITAL"
-        string beschreibung
     }
     PRODUKT {
         int produkt_id PK
-        string produkt_code UK
         string produkt_name
         string sendungsart "BRIEF / PAKET"
         string zone "CH / EUROPA / WELT"
         string service "A-POST, B-POST, PRIORITY, ECONOMY, SAME-DAY"
-        string format
-        int min_gewicht_g
         int max_gewicht_g
-        int max_dicke_mm
         int laufzeit_soll_werktage
         decimal preis_chf
-        boolean aktiv
-    }
-    ZUSATZLEISTUNG {
-        int zusatzleistung_id PK
-        string code UK
-        string bezeichnung
-        string anwendbar_fuer
-        decimal preis_chf
-    }
-    STANDORT {
-        int standort_id PK
-        string standort_name
-        string standort_typ
-        string plz
-        string ort
-        string kanton
-        string land_code FK
     }
     EMPFAENGER {
         int empfaenger_id PK
-        string vorname
-        string nachname
-        string firmenname
-        int adresse_id FK
+        string name
+        string strasse
+        string plz
+        string ort
+        string land_code FK
     }
     AUFTRAG {
         int auftrag_id PK
         int kunde_id FK
         int kanal_id FK
-        int standort_id FK "optional"
-        timestamp auftrag_zeitpunkt
-        string zahlungsart
+        date auftrag_datum
         decimal betrag_total_chf
     }
     SENDUNG {
@@ -108,26 +65,9 @@ erDiagram
         int produkt_id FK
         int empfaenger_id FK
         int gewicht_g
-        decimal laenge_cm
-        decimal breite_cm
-        decimal hoehe_cm
         decimal preis_chf
         date aufgabe_datum
         date soll_zustell_datum
         date zustell_datum
-        string status
-    }
-    SENDUNG_ZUSATZLEISTUNG {
-        int auftrag_id PK,FK
-        int position_nr PK,FK
-        int zusatzleistung_id PK,FK
-    }
-    TRACKING_EVENT {
-        int auftrag_id PK,FK "ID-Beziehung zu SENDUNG"
-        int position_nr PK,FK
-        int event_nr PK
-        timestamp event_zeitpunkt
-        string event_code
-        string event_text
-        int standort_id FK "optional"
+        string status "UNTERWEGS, ZUGESTELLT, RETOURNIERT, VERLOREN"
     }

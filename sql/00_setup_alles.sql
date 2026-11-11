@@ -2,7 +2,7 @@
 -- MAGIC %md
 -- MAGIC # 00 – Komplettes Setup der operativen Datenbank
 -- MAGIC
--- MAGIC Führt alle Skripte in der richtigen Reihenfolge aus (Dauer auf Serverless ca. 3–6 Minuten).
+-- MAGIC Führt alle Skripte in der richtigen Reihenfolge aus (Dauer auf Serverless ca. 1–2 Minuten).
 -- MAGIC Voraussetzung: Alle Dateien aus dem Ordner `sql/` liegen als **Notebooks** im selben Workspace-Ordner
 -- MAGIC (z.B. über einen Git-Ordner oder Import, siehe `INSTALL.md`).
 -- MAGIC
@@ -26,12 +26,4 @@
 
 -- COMMAND ----------
 
--- MAGIC %run ./05_insert_tracking_teil1
-
--- COMMAND ----------
-
--- MAGIC %run ./05_insert_tracking_teil2
-
--- COMMAND ----------
-
--- MAGIC %run ./06_pruefabfragen
+-- MAGIC %run ./05_pruefabfragen

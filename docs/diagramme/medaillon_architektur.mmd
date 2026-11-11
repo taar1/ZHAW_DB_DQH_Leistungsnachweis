@@ -4,9 +4,9 @@ title: Medaillon-Architektur Datawarehouse (Vorschlag)
 flowchart LR
     subgraph SRC["Quelle: operative DB<br/>workspace.post_oltp"]
         direction TB
-        S1[(kunde, adresse,<br/>empfaenger)]
-        S2[(produkt, zusatzleistung,<br/>verkaufskanal, standort, land)]
-        S3[(auftrag, sendung,<br/>sendung_zusatzleistung,<br/>tracking_event)]
+        S1[(kunde, empfaenger)]
+        S2[(produkt, verkaufskanal,<br/>land)]
+        S3[(auftrag, sendung)]
     end
 
     subgraph BRONZE["Bronze: post_dwh_bronze"]
@@ -16,7 +16,7 @@ flowchart LR
 
     subgraph SILVER["Silver: post_dwh_silver"]
         direction TB
-        V1["Bereinigt und standardisiert<br/>(Telefon, Ort, PLZ, E-Mail)"]
+        V1["Bereinigt und standardisiert<br/>(Ort, PLZ, E-Mail)"]
         V2["Datenqualitätsprüfungen<br/>→ dq_flags je Zeile"]
         V3[("Quarantäne-Tabellen<br/>dq_quarantaene_*")]
         V1 --> V2 --> V3
