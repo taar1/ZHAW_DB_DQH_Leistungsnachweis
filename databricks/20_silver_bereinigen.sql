@@ -181,7 +181,7 @@ FROM post_dwh_silver.kunde;
 
 -- COMMAND ----------
 
--- Ergebnis des aktuellen Laufs (erwartet: P1 = 12, P2 = 153, P3 = 19, P4 = 43)
+-- Ergebnis des aktuellen Laufs (erwartet: P1 = 12, P2 = 153, P3 = 7, P4 = 43)
 SELECT pruefung, tabelle, anzahl_geprueft, anzahl_fehler,
        ROUND(100.0 * anzahl_fehler / anzahl_geprueft, 2) AS fehler_prozent
 FROM post_dwh_silver.dq_protokoll

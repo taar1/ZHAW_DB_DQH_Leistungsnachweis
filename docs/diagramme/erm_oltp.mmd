@@ -61,7 +61,7 @@ erDiagram
     SENDUNG {
         int auftrag_id PK,FK "ID-Beziehung zu AUFTRAG"
         int position_nr PK
-        string tracking_nr UK
+        string tracking_nr UK "nur Pakete, sonst NULL"
         int produkt_id FK
         int empfaenger_id FK
         int gewicht_g

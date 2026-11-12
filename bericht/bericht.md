@@ -1,28 +1,36 @@
----
-title: "Leistungsnachweis DB & DWH – Variante 1"
-subtitle: "Operative Datenbank, Datawarehouse und Auswertung für den Brief- und Paketversand der Schweizer Post"
-author:
-  - "Dominik Erbsland"
-  - "Joel Liechti"
-date: "30. November 2026"
-lang: de-CH
----
-
 # Leistungsnachweis DB & DWH – Variante 1
 
 **Operative Datenbank, Datawarehouse und Auswertung für den Brief- und Paketversand der Schweizer Post**
 
-| | |
+| Angabe | |
 |---|---|
 | Modul | Datenbanken & Datawarehouse (DB & DWH), ZHAW School of Engineering |
 | Team | Dominik Erbsland, Joel Liechti |
 | Abgabe | 30.11.2026 |
 | Repository | <https://github.com/taar1/ZHAW_DB_DQH_Leistungsnachweis> |
-| Werkzeuge | Databricks Free Edition (Serverless, Unity Catalog), Python, Mermaid, [Power BI] |
+| Werkzeuge | Databricks Free Edition (Serverless, Unity Catalog), Python, Mermaid, Databricks AI/BI Dashboard |
 
 > **Hinweis zur Arbeit am Bericht:** Stellen mit **TODO** müssen wir noch ergänzen (Screenshots, Resultate aus
 > Databricks, Interpretation). Die Diagramme liegen als Mermaid-Quellen in `docs/diagramme/` und sind hier
 > eingebettet. Bei Änderungen beide Stellen nachführen.
+
+### Schnellstart: Projekt in Databricks nachvollziehen
+
+Damit die Ergebnisse beim Lesen direkt in Databricks angeschaut werden können:
+
+1. **Notebooks holen**, eine der beiden Varianten:
+   - Abgabedatei `post_leistungsnachweis.dbc` importieren: **Workspace** → eigener Ordner → **⋮ → Import**.
+   - Oder als Git-Ordner verknüpfen: **Workspace → Create → Git folder**, URL
+     `https://github.com/taar1/ZHAW_DB_DQH_Leistungsnachweis` (öffentlich, kein Token nötig).
+2. **Operative Datenbank aufsetzen:** Notebook `sql/00_setup_alles` öffnen, Compute *Serverless*, **Run all**.
+   Legt das Schema `post_oltp` (Kapitel 3–4) an und füllt es.
+3. **Datawarehouse laden:** Notebook `databricks/00_etl_alles` → **Run all**. Legt `post_dwh_bronze`,
+   `post_dwh_silver` und `post_dwh_gold` an (Kapitel 6–8) inkl. der Sichten für das Dashboard (Kapitel 9).
+4. **Anschauen:** Im **Catalog** unter `workspace` die vier Schemas öffnen, im **SQL Editor** z.B.
+   `SELECT * FROM workspace.post_dwh_silver.dq_protokoll;`
+
+Beide Notebooks dauern je 1–2 Minuten und können beliebig oft ausgeführt werden. Details und Kontrollwerte:
+[`INSTALL.md`](../INSTALL.md).
 
 ---
 
@@ -46,11 +54,11 @@ lang: de-CH
 
 ### 1.1 Beruflicher Kontext
 
-Wir arbeiten beide bei der **Schweizerischen Post**. Die Post verkauft Privat- und Geschäftskunden Versandleistungen
+Wir arbeiten beide bei der **Schweizerischen Post / PostAuto**. Die Post verkauft Privat- und Geschäftskunden Versandleistungen
 für Briefe und Pakete, im Inland wie ins Ausland. Verkauft wird über physische Kanäle (Postfilialen,
 Filialen mit Partner, My Post 24-Automaten, Abholung pick@home) und über digitale Kanäle (Online-Porto/WebStamp,
-Post-App, Geschäftskundenportal bzw. Versandschnittstelle). Jede verkaufte Sendung erhält eine Sendungsnummer
-(Trackingnummer).
+Post-App, Geschäftskundenportal bzw. Versandschnittstelle). Pakete erhalten eine Sendungsnummer (Trackingnummer)
+und können verfolgt werden. Normale Briefe (A-Post, B-Post, international) haben keine Sendungsnummer.
 
 Für den Leistungsnachweis modellieren wir einen **vereinfachten Ausschnitt** dieses Geschäfts. Produkte und Preise
 sind an das öffentliche Sortiment der Post angelehnt, aber vereinfacht. Alle Kunden- und Empfängerdaten sind
@@ -64,9 +72,11 @@ Die operative Anwendung unterstützt folgende Geschäftsprozesse:
 2. **Verkauf (Auftrag):** Ein Kunde kauft über einen **Verkaufskanal** eine oder mehrere Versandleistungen. Ein Kauf
    ist ein *Auftrag*.
 3. **Sendungserfassung:** Jede Position des Auftrags ist eine **Sendung**. Sie verweist auf genau ein **Produkt**
-   (z.B. *Paket Priority M*) und einen **Empfänger** und erhält eine eindeutige Trackingnummer.
-4. **Zustellung:** Für jede Sendung werden das Aufgabedatum, das gemäss Produktlaufzeit versprochene Zustelldatum
-   (Soll), das effektive Zustelldatum (Ist) und der Status (unterwegs, zugestellt, retourniert, verloren) geführt.
+   (z.B. *Paket Priority M*) und einen **Empfänger**. Pakete erhalten eine eindeutige Trackingnummer.
+4. **Zustellung:** Für jede Sendung werden das Aufgabedatum und das gemäss Produktlaufzeit versprochene Zustelldatum
+   (Soll) geführt. Bei Paketen liefert das Tracking zusätzlich das effektive Zustelldatum (Ist) und den Status
+   (unterwegs, zugestellt, retourniert, verloren). Bei Briefen bleiben diese Felder leer, da sie nicht verfolgt
+   werden.
 
 Bewusst **nicht** modelliert haben wir die einzelnen Ereignisse der Sendungsverfolgung (Scans in Sortierzentren),
 Zusatzleistungen wie Einschreiben sowie die Standorte (Filialen, Sortierzentren). Sie würden das Modell deutlich
@@ -164,7 +174,7 @@ erDiagram
     SENDUNG {
         int auftrag_id PK,FK "ID-Beziehung zu AUFTRAG"
         int position_nr PK
-        string tracking_nr UK
+        string tracking_nr UK "nur Pakete, sonst NULL"
         int produkt_id FK
         int empfaenger_id FK
         int gewicht_g
@@ -190,7 +200,7 @@ erDiagram
 | `PRODUKT` | Versandprodukt mit Zone, Service, Gewichtslimite, Soll-Laufzeit und Preis | `produkt_id` |
 | `EMPFAENGER` | Empfänger einer Sendung, inkl. Adresse | `empfaenger_id` |
 | `AUFTRAG` | Kaufvorgang eines Kunden über einen Kanal | `auftrag_id` |
-| `SENDUNG` | Position eines Auftrags = eine physische Sendung | (`auftrag_id`, `position_nr`); alternativ `tracking_nr` |
+| `SENDUNG` | Position eines Auftrags = eine physische Sendung | (`auftrag_id`, `position_nr`) |
 
 Die Adresse ist direkt in `KUNDE` bzw. `EMPFAENGER` gespeichert. Eine eigene Adresstabelle wäre normalisierter,
 bringt für unsere Auswertungen aber keinen Mehrwert.
@@ -227,18 +237,18 @@ Beispiel aus den Daten: Auftrag 25 (Privatkunde, gekauft in der Postfiliale) umf
 
 | auftrag_id | position_nr | tracking_nr | Produkt | Empfänger (Land) |
 |---:|---:|---|---|---|
-| 25 | 1 | 98.01.100039.10001295 | Standardbrief A-Post | CH |
-| 25 | 2 | 99.34.100039.10001332 | Paket Economy M | CH |
-| 25 | 3 | 98.01.100039.10001369 | Standardbrief A-Post | CH |
-| 25 | 4 | 99.60.100039.10001406 | Paket Priority M | CH |
-| 25 | 5 | CP100002738CH | Paket International Welt Priority (bis 10 kg) | US |
+| 25 | 1 | – | Standardbrief A-Post | CH |
+| 25 | 2 | 99.34.100039.10000629 | Paket Economy M | CH |
+| 25 | 3 | – | Standardbrief A-Post | CH |
+| 25 | 4 | 99.60.100039.10000666 | Paket Priority M | CH |
+| 25 | 5 | CP100001335CH | Paket International Welt Priority (bis 10 kg) | US |
 
 `position_nr = 1` ist für sich allein nicht eindeutig (jeder Auftrag hat eine Position 1), erst zusammen mit
 `auftrag_id`.
 
-**Alternativer Schlüssel:** Die `tracking_nr` ist ebenfalls eindeutig und könnte als Primärschlüssel dienen. Wir haben
-uns bewusst für die ID-Beziehung entschieden. Sie bildet die fachliche Abhängigkeit ab, und Sendungen können erfasst
-werden, bevor die Trackingnummer bekannt ist (z.B. bei nachträglicher Etikettierung).
+**Warum nicht die `tracking_nr` als Schlüssel?** Sie ist zwar eindeutig, aber nur Pakete haben eine. Briefe haben
+keine Sendungsnummer (im Beispiel Positionen 1 und 3), die Spalte ist deshalb optional und kann kein Primärschlüssel
+sein. Die ID-Beziehung identifiziert dagegen jede Sendung und bildet die fachliche Abhängigkeit vom Auftrag ab.
 
 ---
 
@@ -264,7 +274,7 @@ Auszug aus der DDL:
 CREATE TABLE post_oltp.sendung (
   auftrag_id           INT           NOT NULL COMMENT 'PK-Teil und FK auf auftrag (ID-Beziehung)',
   position_nr          INT           NOT NULL COMMENT 'PK-Teil: laufende Nummer der Sendung im Auftrag',
-  tracking_nr          STRING        NOT NULL COMMENT 'Sendungsnummer (fachlicher Schlüssel)',
+  tracking_nr          STRING                 COMMENT 'Sendungsnummer, nur bei Paketen (Briefe sind nicht verfolgbar)',
   produkt_id           INT           NOT NULL COMMENT 'FK auf produkt',
   empfaenger_id        INT           NOT NULL COMMENT 'FK auf empfaenger',
   ...
@@ -283,17 +293,29 @@ CREATE TABLE post_oltp.sendung (
 ### 4.1 Vorgehen
 
 Die Beispieldaten erzeugt ein Python-Skript ([`scripts/generate_data.py`](../scripts/generate_data.py)). Es
-schreibt SQL-INSERT-Skripte (`sql/02_…` bis `sql/04_…`). Der Generator arbeitet mit einem **fixen Zufalls-Seed**,
-die Daten sind also reproduzierbar. Er simuliert den Geschäftsprozess, damit die Auswertungen realistische Muster zeigen:
+schreibt die Daten als SQL-INSERT-Skripte, die `sql/00_setup_alles` in die operative Datenbank `post_oltp` lädt:
+
+| Datei | Tabellen |
+|---|---|
+| `sql/02_insert_stammdaten.sql` | `land`, `verkaufskanal`, `produkt` |
+| `sql/03_insert_kunden_empfaenger.sql` | `kunde`, `empfaenger` |
+| `sql/04_insert_auftraege_sendungen.sql` | `auftrag`, `sendung` |
+
+Diese Skripte ersetzen den laufenden Betrieb: In der Praxis würden die Daten durch das Postsystem selbst entstehen.
+Für das Datawarehouse ist `post_oltp` die Quelle, aus der die Bronze-Schicht geladen wird (Kapitel 7).
+
+Der Generator arbeitet mit einem **fixen Zufalls-Seed**, die Daten sind also reproduzierbar. Er simuliert den
+Geschäftsprozess, damit die Auswertungen realistische Muster zeigen:
 
 - Kunden haben einen **bevorzugten Kanal**; digitale Kanäle gewinnen über die Jahre Anteile.
 - **Saisonalität:** Spitzen im November (Black Friday) und Dezember, wenig Aufträge an Sonn- und Feiertagen.
   Der Briefanteil sinkt über die Zeit.
 - Das **Produkt** passt zur Zone des Empfängers, das **Gewicht** zur Gewichtsklasse des Produkts.
-- Das **Soll-Zustelldatum** ergibt sich aus der Produktlaufzeit in Werktagen. Rund 6 % der Sendungen sind verspätet,
-  vor Weihnachten mehr. Dazu kommen wenige Retouren und verlorene Sendungen.
-- **Trackingnummern** folgen dem Aufbau der Post, z.B. `99.60.123456.12345678` (Inland-Paket) oder `CP100002738CH`
-  (international, UPU-Format).
+- Das **Soll-Zustelldatum** ergibt sich aus der Produktlaufzeit in Werktagen. Rund 6–7 % der Pakete sind verspätet,
+  vor Weihnachten mehr. Dazu kommen wenige Retouren und verlorene Pakete.
+- **Trackingnummern** gibt es nur für Pakete. Sie folgen dem Aufbau der Post, z.B. `99.60.123456.12345678`
+  (Inland) oder `CP100001335CH` (international, UPU-Format). Briefe haben keine Sendungsnummer, kein erfasstes
+  Zustelldatum und keinen Status.
 
 Zeitraum: **01.01.2024 – 09.11.2026**, Datenstand (Stichtag) 10.11.2026.
 
@@ -322,7 +344,7 @@ Operative Systeme enthalten in der Praxis immer fehlerhafte Daten. Damit die Dat
 | DQ4 | Kunden-Dubletten (gleiche Person zweimal erfasst) | `kunde` | 8 | Neuregistrierung statt Login |
 | DQ5 | Gewicht grösser als Produktlimite | `sendung.gewicht_g` | 109 | Falsches Produkt gewählt, Waage |
 | DQ6 | Gewicht fehlt oder 0 | `sendung.gewicht_g` | 44 | Nicht gewogen |
-| DQ7 | Zustelldatum vor Aufgabedatum | `sendung.zustell_datum` | 19 | Falsche Systemzeit eines Scanners |
+| DQ7 | Zustelldatum vor Aufgabedatum (Pakete) | `sendung.zustell_datum` | 7 | Falsche Systemzeit eines Scanners |
 | DQ8 | Empfänger existiert nicht (verwaister Fremdschlüssel) | `sendung.empfaenger_id` | 12 | FK nicht erzwungen, Löschung |
 | DQ9 | Auftragstotal ≠ Summe der Sendungspreise | `auftrag.betrag_total_chf` | 43 | Manuelle Korrektur, Rundung |
 
@@ -339,7 +361,7 @@ Die Abfragen zum Erkennen dieser Probleme stehen in [`sql/05_pruefabfragen.sql`]
 |---|---|
 | Geschäftsleitung | Entwicklung von Mengen und Umsatz, Strukturwandel Brief → Paket |
 | Vertrieb | Umsatz pro Verkaufskanal und Kundentyp, Nutzung der digitalen Kanäle |
-| Betrieb / Qualitätsmanagement | Pünktlichkeit der Zustellung |
+| Betrieb / Qualitätsmanagement | Pünktlichkeit der Paketzustellung |
 
 ### 5.2 Steuerungskennzahlen (KPIs)
 
@@ -349,7 +371,7 @@ Die Abfragen zum Erkennen dieser Probleme stehen in [`sql/05_pruefabfragen.sql`]
 | Umsatz CHF | Σ `preis_chf` der Sendungen |
 | Ø Umsatz pro Sendung | Umsatz / Sendungsmenge |
 | Digitalisierungsgrad | Anteil des Umsatzes über digitale Kanäle |
-| Pünktlichkeitsquote | Anteil zugestellter Sendungen mit `zustell_datum ≤ soll_zustell_datum` |
+| Pünktlichkeitsquote | Anteil zugestellter Pakete mit `zustell_datum ≤ soll_zustell_datum` (nur Pakete, da Briefe nicht verfolgt werden) |
 
 Alle KPIs lassen sich nach Zeit (Jahr, Quartal, Monat), Produkt, Kanal, Kunde und Zielland auswerten.
 
@@ -361,8 +383,9 @@ Diese drei Fragen beantwortet das Datawarehouse. Sie werden im Dashboard (Kapite
   Monat? Welche Saisonalität gibt es?
 - **F2 – Verkaufskanäle:** Welcher Umsatz fällt pro Verkaufskanal und Kundentyp an, und wächst der Anteil der
   digitalen Kanäle?
-- **F3 – Pünktlichkeit:** Wie hoch ist die Pünktlichkeitsquote pro Zone und Service (A-Post, B-Post, Priority,
-  Economy)? Sinkt sie in der Vorweihnachtszeit?
+- **F3 – Pünktlichkeit:** Wie hoch ist die Pünktlichkeitsquote der Pakete pro Zone und Service (Priority, Economy,
+  Same Day)? Sinkt sie in der Vorweihnachtszeit? Für Briefe lässt sich die Frage mit unseren Daten nicht beantworten,
+  da sie kein Tracking haben. In der Praxis misst die Post die Brieflaufzeiten mit Testbriefen.
 
 ---
 
@@ -371,7 +394,7 @@ Diese drei Fragen beantwortet das Datawarehouse. Sie werden im Dashboard (Kapite
 ### 6.1 Wahl des Geschäftsobjekts
 
 Wir wählen die **Sendung** als Geschäftsobjekt. An ihr lassen sich alle Fragen aus Kapitel 5 messen (Menge, Umsatz,
-Pünktlichkeit).
+und für Pakete die Pünktlichkeit).
 
 **Granularität (Grain):** Eine Zeile der Faktentabelle entspricht **einer Sendung**. Das ist die feinste verfügbare
 Granularität, damit lassen sich alle Kennzahlen beliebig aggregieren.
@@ -396,13 +419,13 @@ erDiagram
         int produkt_id FK
         int kanal_id FK
         string land_code FK
-        string tracking_nr "degenerierte Dimension"
+        string tracking_nr "degenerierte Dimension, nur Pakete"
         string status "degenerierte Dimension"
         int anzahl_sendungen "Mass (immer 1)"
         decimal umsatz_chf "Mass, additiv"
         int gewicht_g "Mass, additiv"
         int laufzeit_werktage "Mass, nicht additiv"
-        int puenktlich_flag "1 = bis Soll-Datum zugestellt"
+        int puenktlich_flag "1 = bis Soll-Datum zugestellt, nur Pakete"
     }
     DIM_DATUM {
         int datum_key PK "YYYYMMDD"
@@ -464,7 +487,7 @@ Die **Faktentabelle** `fact_sendung` enthält die Kennzahlen und die Schlüssel 
 | `umsatz_chf` | additiv | |
 | `gewicht_g` | additiv | NULL, wenn die DQ-Prüfung fehlschlägt |
 | `laufzeit_werktage` | nicht additiv | nur Durchschnitt sinnvoll |
-| `puenktlich_flag` | semi-additiv | 1 = pünktlich, 0 = verspätet, NULL = nicht zugestellt; Durchschnitt = Pünktlichkeitsquote |
+| `puenktlich_flag` | semi-additiv | 1 = pünktlich, 0 = verspätet, NULL = nicht zugestellt oder Brief; Durchschnitt = Pünktlichkeitsquote |
 
 **Designentscheide**
 
@@ -472,7 +495,7 @@ Die **Faktentabelle** `fact_sendung` enthält die Kennzahlen und die Schlüssel 
   Datumsschlüssel hat das Format `YYYYMMDD`. Da wir nicht historisieren (SCD Typ 1, d.h. Änderungen überschreiben),
   braucht es keine zusätzlichen Surrogatschlüssel.
 - `tracking_nr` und `status` bleiben als **degenerierte Dimensionen** direkt in der Faktentabelle. Für zwei Attribute
-  lohnt sich keine eigene Dimensionstabelle.
+  lohnt sich keine eigene Dimensionstabelle. Bei Briefen sind beide leer (kein Tracking).
 - **Unbekannte Werte:** Sendungen mit fehlendem Empfänger (DQ-Problem) werden dem Zielland `XX – Unbekannt`
   zugeordnet, damit ihr Umsatz nicht verloren geht.
 
@@ -559,7 +582,7 @@ Datenqualität über mehrere Läufe sichtbar. Ergebnis eines Laufs:
 |---|---|---:|---:|---:|
 | P1 Referentielle Integrität Empfänger | sendung | 12'134 | 12 | 0.10 % |
 | P2 Plausibilität Gewicht | sendung | 12'134 | 153 | 1.26 % |
-| P3 Plausibilität Zustelldatum | sendung | 12'134 | 19 | 0.16 % |
+| P3 Plausibilität Zustelldatum | sendung | 12'134 | 7 | 0.06 % |
 | P4 Abstimmung Auftragstotal | auftrag | 5'687 | 43 | 0.76 % |
 | Info: Ort vereinheitlicht | kunde | 658 | 10 | 1.52 % |
 | Info: E-Mail fehlt oder ungültig | kunde | 658 | 20 | 3.04 % |
@@ -581,7 +604,7 @@ Datenquelle verwendet. So ist die Abfragelogik im Repository versioniert.
 | Kennzahlen | `v_kpi_uebersicht` | Kacheln: Sendungen, Umsatz, Ø Umsatz/Sendung, Anteil digital, Pünktlichkeit |
 | F1 Brief vs. Paket | `v_f1_brief_paket_monat` | Linie: Sendungen pro Monat, Farbe = Sendungsart; Balken: Umsatz pro Jahr und Sendungsart |
 | F2 Verkaufskanäle | `v_f2_umsatz_kanal`, `v_f2_digital_quartal` | Balken: Umsatz pro Kanal, Farbe = Kundentyp; Linie: Anteil digital pro Quartal |
-| F3 Pünktlichkeit | `v_f3_puenktlichkeit_service`, `v_f3_puenktlichkeit_monat` | Balken: Quote pro Zone und Service; Linie: Quote pro Monat, Farbe = Zone |
+| F3 Pünktlichkeit (Pakete) | `v_f3_puenktlichkeit_service`, `v_f3_puenktlichkeit_monat` | Balken: Quote pro Zone und Service; Linie: Quote pro Monat, Farbe = Zone |
 
 > **TODO (Team):** Pro Frage einen Screenshot des Dashboards und 2–3 Sätze Interpretation einfügen.
 
@@ -589,7 +612,8 @@ Erste Beobachtungen aus den Daten (als Grundlage für die Interpretation):
 
 - Pakete machen rund 60 % der Sendungen, aber über 90 % des Umsatzes aus.
 - Im Dezember werden deutlich mehr Sendungen aufgegeben (2025: rund 1.6× so viele wie im Juni).
-- Die Pünktlichkeit liegt im Inland bei rund 94–97 %, international bei 76–87 % (gesamt 93.8 %).
+- Die Pünktlichkeit der Pakete liegt im Inland bei rund 94–96 %, international bei 74–91 % (gesamt 93.4 %).
+  Am schlechtesten schneidet Economy in die Zone Welt ab.
 - Der Anteil digitaler Kanäle liegt bei rund 55–65 % des Umsatzes und schwankt stark von Quartal zu Quartal.
 
 ---
@@ -610,12 +634,12 @@ Erste Beobachtungen aus den Daten (als Grundlage für die Interpretation):
 | `post_leistungsnachweis.dbc` | Databricks-Export: SQL-Notebooks (`sql/`) und ETL-Notebooks (`databricks/`) |
 | `INSTALL.md` | Installationsanleitung |
 | `docs/diagramme/*.mmd` | Mermaid-Quellen der Diagramme |
+| `sql/02_…` bis `sql/04_…` | Beispieldaten als INSERT-Skripte (generiert) |
 | `scripts/generate_data.py` | Datengenerator |
 
 ### 11.2 Installationsanleitung
 
-Siehe [`INSTALL.md`](../INSTALL.md). Kurzfassung: `.dbc` in Databricks importieren, Notebook `sql/00_setup_alles`
-ausführen, danach die ETL-Notebooks in `databricks/` in nummerierter Reihenfolge.
+Siehe [`INSTALL.md`](../INSTALL.md). Die Kurzfassung steht am Anfang des Berichts (Schnellstart).
 
 ### 11.3 Verwendung von KI-Werkzeugen
 

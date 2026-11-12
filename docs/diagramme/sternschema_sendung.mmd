@@ -16,13 +16,13 @@ erDiagram
         int produkt_id FK
         int kanal_id FK
         string land_code FK
-        string tracking_nr "degenerierte Dimension"
+        string tracking_nr "degenerierte Dimension, nur Pakete"
         string status "degenerierte Dimension"
         int anzahl_sendungen "Mass (immer 1)"
         decimal umsatz_chf "Mass, additiv"
         int gewicht_g "Mass, additiv"
         int laufzeit_werktage "Mass, nicht additiv"
-        int puenktlich_flag "1 = bis Soll-Datum zugestellt"
+        int puenktlich_flag "1 = bis Soll-Datum zugestellt, nur Pakete"
     }
     DIM_DATUM {
         int datum_key PK "YYYYMMDD"

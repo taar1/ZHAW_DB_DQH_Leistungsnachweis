@@ -74,6 +74,8 @@ SELECT 'XX', 'Unbekannt', 'UNBEKANNT';
 -- MAGIC * `laufzeit_werktage`: Werktage (Mo–Fr) zwischen Aufgabe und Zustellung; Feiertage werden vereinfacht nicht abgezogen.
 -- MAGIC * `puenktlich_flag`: 1 = bis zum Soll-Datum zugestellt, 0 = verspätet, NULL = nicht (gültig) zugestellt.
 -- MAGIC   Der Durchschnitt ergibt direkt die Pünktlichkeitsquote.
+-- MAGIC * Briefe haben keine Sendungsnummer und kein erfasstes Zustelldatum: `tracking_nr`, `status`, `laufzeit_werktage`
+-- MAGIC   und `puenktlich_flag` sind bei Briefen NULL. Die Pünktlichkeit wird deshalb nur für Pakete ausgewiesen.
 
 -- COMMAND ----------
 

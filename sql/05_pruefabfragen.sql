@@ -76,7 +76,7 @@ ORDER BY umsatz_chf DESC;
 
 -- COMMAND ----------
 
--- 3c) Pünktlichkeit (zugestellt bis Soll-Datum) pro Zone und Service
+-- 3c) Pünktlichkeit (zugestellt bis Soll-Datum) pro Zone und Service – nur Pakete, Briefe haben kein Tracking
 SELECT p.zone, p.service,
        COUNT(*) AS zugestellt,
        ROUND(AVG(CASE WHEN s.zustell_datum <= s.soll_zustell_datum THEN 1 ELSE 0 END) * 100, 1) AS puenktlich_prozent

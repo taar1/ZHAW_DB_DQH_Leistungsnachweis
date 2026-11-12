@@ -119,9 +119,9 @@ Voraussetzung: Die operative DB ist aufgesetzt (Kapitel 2 bzw. 3).
 
 2. Kontrolle:
    - `10_bronze_laden`, letzte Zelle: überall `ok = true`.
-   - `20_silver_bereinigen`, letzte Zelle: P1 = 12, P2 = 153, P3 = 19, P4 = 43 Fehler.
+   - `20_silver_bereinigen`, letzte Zelle: P1 = 12, P2 = 153, P3 = 7, P4 = 43 Fehler.
    - `30_gold_sternschema`, letzte Zelle: 12'134 Sendungen in Silver und Fakten, alle `ohne_…`-Spalten = 0,
-     Umsatz 153'541.10 CHF, Pünktlichkeit 93.8 %.
+     Umsatz 153'541.10 CHF, Pünktlichkeit (Pakete) 93.4 %.
 
 Der ETL-Lauf kann beliebig oft wiederholt werden. Das DQ-Protokoll erhält pro Lauf neue Zeilen.
 

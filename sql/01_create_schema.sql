@@ -132,15 +132,15 @@ CREATE TABLE post_oltp.auftrag (
 CREATE TABLE post_oltp.sendung (
   auftrag_id           INT           NOT NULL COMMENT 'PK-Teil und FK auf auftrag (ID-Beziehung)',
   position_nr          INT           NOT NULL COMMENT 'PK-Teil: laufende Nummer der Sendung im Auftrag',
-  tracking_nr          STRING        NOT NULL COMMENT 'Sendungsnummer (fachlicher Schlüssel)',
+  tracking_nr          STRING                 COMMENT 'Sendungsnummer, nur bei Paketen (Briefe sind nicht verfolgbar)',
   produkt_id           INT           NOT NULL COMMENT 'FK auf produkt',
   empfaenger_id        INT           NOT NULL COMMENT 'FK auf empfaenger',
   gewicht_g            INT                    COMMENT 'Gewicht in Gramm',
   preis_chf            DECIMAL(8,2)  NOT NULL COMMENT 'Bezahlter Preis in CHF',
   aufgabe_datum        DATE          NOT NULL COMMENT 'Datum der Aufgabe',
   soll_zustell_datum   DATE          NOT NULL COMMENT 'Gemäss Produktlaufzeit versprochenes Zustelldatum',
-  zustell_datum        DATE                   COMMENT 'Effektives Zustelldatum (NULL, wenn nicht zugestellt)',
-  status               STRING        NOT NULL COMMENT 'UNTERWEGS, ZUGESTELLT, RETOURNIERT, VERLOREN',
+  zustell_datum        DATE                   COMMENT 'Effektives Zustelldatum aus dem Tracking (nur Pakete; NULL, wenn nicht zugestellt)',
+  status               STRING                 COMMENT 'Tracking-Status (nur Pakete): UNTERWEGS, ZUGESTELLT, RETOURNIERT, VERLOREN',
   CONSTRAINT pk_sendung PRIMARY KEY (auftrag_id, position_nr),
   CONSTRAINT fk_sendung_auftrag FOREIGN KEY (auftrag_id) REFERENCES post_oltp.auftrag (auftrag_id),
   CONSTRAINT fk_sendung_produkt FOREIGN KEY (produkt_id) REFERENCES post_oltp.produkt (produkt_id),
@@ -148,5 +148,5 @@ CREATE TABLE post_oltp.sendung (
 ) COMMENT 'Einzelne Brief- oder Paketsendungen eines Auftrags';
 
 ALTER TABLE post_oltp.sendung ADD CONSTRAINT chk_sendung_status
-  CHECK (status IN ('UNTERWEGS', 'ZUGESTELLT', 'RETOURNIERT', 'VERLOREN'));
+  CHECK (status IS NULL OR status IN ('UNTERWEGS', 'ZUGESTELLT', 'RETOURNIERT', 'VERLOREN'));
 ALTER TABLE post_oltp.sendung ADD CONSTRAINT chk_sendung_preis CHECK (preis_chf >= 0);

@@ -497,16 +497,15 @@ def s10(prefix: str, nummer: int) -> str:
 
 
 def neue_tracking_nr(produkt, kunde_id):
+    """Sendungsnummer für Pakete. Normale Briefe (A-/B-Post, international) haben keine Sendungsnummer."""
     global _tracking_seq
+    if produkt["sendungsart"] != "PAKET":
+        return None
     _tracking_seq += 1
     if produkt["zone"] == "CH":
-        art = "99" if produkt["sendungsart"] == "PAKET" else "98"
-        code = {"PRIORITY": "60", "ECONOMY": "34", "SAME-DAY": "00", "A-POST": "01", "B-POST": "02"}[produkt["service"]]
-        return f"{art}.{code}.{(100000 + kunde_id * 13) % 1000000:06d}.{(10000000 + _tracking_seq * 37) % 100000000:08d}"
-    if produkt["sendungsart"] == "PAKET":
-        prefix = "CP" if produkt["service"] == "PRIORITY" else "CV"
-    else:
-        prefix = "LA" if produkt["service"] == "PRIORITY" else "LE"
+        code = {"PRIORITY": "60", "ECONOMY": "34", "SAME-DAY": "00"}[produkt["service"]]
+        return f"99.{code}.{(100000 + kunde_id * 13) % 1000000:06d}.{(10000000 + _tracking_seq * 37) % 100000000:08d}"
+    prefix = "CP" if produkt["service"] == "PRIORITY" else "CV"
     return s10(prefix, 10000000 + _tracking_seq * 7)
 
 
@@ -691,6 +690,14 @@ for k in kunden:
             if random.random() < DQ_EMPFAENGER_FEHLT:
                 s["empfaenger_id"] = len(empfaenger) + random.randint(1, 500)
                 dq_log["sendung.empfaenger_id ohne Empfänger (verwaister FK)"] += 1
+
+            # Briefe sind nicht verfolgbar: kein Tracking-Status und kein erfasstes Zustelldatum.
+            # (Die Simulation läuft trotzdem, damit der Zufallsgenerator für alle Sendungen gleich weiterläuft.)
+            if p["sendungsart"] == "BRIEF":
+                if s["zustell_datum"] and s["zustell_datum"] < s["aufgabe_datum"]:
+                    dq_log["sendung.zustell_datum < aufgabe_datum"] -= 1
+                s["zustell_datum"] = None
+                s["status"] = None
 
             sendungen.append(s)
             summe += preis

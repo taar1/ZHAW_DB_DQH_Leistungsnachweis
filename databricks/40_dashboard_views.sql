@@ -12,8 +12,8 @@
 -- MAGIC | `v_f1_brief_paket_monat` | F1 Brief vs. Paket | Linie: Sendungen pro Monat, Farbe = Sendungsart |
 -- MAGIC | `v_f2_umsatz_kanal` | F2 Verkaufskanäle | Balken: Umsatz pro Kanal, Farbe = Kundentyp |
 -- MAGIC | `v_f2_digital_quartal` | F2 Verkaufskanäle | Linie: Anteil digitaler Kanäle pro Quartal |
--- MAGIC | `v_f3_puenktlichkeit_service` | F3 Pünktlichkeit | Balken: Quote pro Zone und Service |
--- MAGIC | `v_f3_puenktlichkeit_monat` | F3 Pünktlichkeit | Linie: Quote pro Monat, Farbe = Zone |
+-- MAGIC | `v_f3_puenktlichkeit_service` | F3 Pünktlichkeit (Pakete) | Balken: Quote pro Zone und Service |
+-- MAGIC | `v_f3_puenktlichkeit_monat` | F3 Pünktlichkeit (Pakete) | Linie: Quote pro Monat, Farbe = Zone |
 
 -- COMMAND ----------
 
@@ -65,7 +65,7 @@ GROUP BY d.jahr_quartal;
 
 -- COMMAND ----------
 
--- F3a: Pünktlichkeitsquote pro Zone und Service
+-- F3a: Pünktlichkeitsquote pro Zone und Service (nur Pakete, Briefe haben kein Tracking)
 CREATE OR REPLACE VIEW post_dwh_gold.v_f3_puenktlichkeit_service AS
 SELECT p.zone, p.service, concat(p.zone, ' ', p.service) AS zone_service,
        COUNT(f.puenktlich_flag)                AS zugestellt,
@@ -77,7 +77,7 @@ GROUP BY p.zone, p.service;
 
 -- COMMAND ----------
 
--- F3b: Pünktlichkeitsquote pro Monat und Zone (Dezember-Effekt)
+-- F3b: Pünktlichkeitsquote pro Monat und Zone (nur Pakete; Dezember-Effekt)
 CREATE OR REPLACE VIEW post_dwh_gold.v_f3_puenktlichkeit_monat AS
 SELECT d.monat_start, p.zone,
        COUNT(f.puenktlich_flag)                AS zugestellt,
