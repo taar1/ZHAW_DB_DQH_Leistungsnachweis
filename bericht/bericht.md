@@ -502,6 +502,9 @@ flowchart LR
 | Silver | `post_dwh_silver` | Bereinigte und standardisierte Daten, jede Sendung mit DQ-Flags; Protokolltabelle `dq_protokoll` | `20_silver_bereinigen` |
 | Gold | `post_dwh_gold` | Sternschema (Kapitel 6) als Grundlage für das Dashboard | `30_gold_sternschema` |
 
+Die drei Schichten entsprechen der DWH-Referenzarchitektur aus dem Unterricht (DWH-3, Folien 25–29):
+Bronze übernimmt die Rolle der Staging Area, Silver die der Integration, Gold die der Data Marts für die Analyse.
+
 Alle Schichten werden bei jedem Lauf vollständig neu geladen (*Full Load* mit `CREATE OR REPLACE TABLE … AS SELECT`).
 Für die kleine Datenmenge ist das am einfachsten und robust. Inkrementelles Laden wäre eine mögliche Erweiterung.
 
