@@ -5,8 +5,8 @@ erDiagram
     DIM_DATUM ||--o{ FACT_SENDUNG : "Aufgabedatum"
     DIM_KUNDE ||--o{ FACT_SENDUNG : "Absender"
     DIM_PRODUKT ||--o{ FACT_SENDUNG : "Produkt"
-    DIM_KANAL ||--o{ FACT_SENDUNG : "Verkaufskanal"
-    DIM_ZIELLAND ||--o{ FACT_SENDUNG : "Empfängerland"
+    FACT_SENDUNG }o--|| DIM_KANAL : "Verkaufskanal"
+    FACT_SENDUNG }o--|| DIM_ZIELLAND : "Empfängerland"
 
     FACT_SENDUNG {
         int auftrag_id PK "Grain: 1 Zeile = 1 Sendung"

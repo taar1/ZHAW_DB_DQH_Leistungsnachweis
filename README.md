@@ -47,5 +47,5 @@ Truth*. Für die Abgabe wird der Ordner aus **einem** Workspace als `.dbc` expor
 Der Bericht ist in Markdown geschrieben (versionierbar). Für die Abgabe gibt es zum Beispiel diese Wege:
 
 - **VS Code** mit der Erweiterung *Markdown PDF* (rendert auch Mermaid). Rechtsklick im Editor → *Markdown PDF: Export (pdf)*.
-- **Pandoc**: `pandoc bericht/bericht.md -o bericht.pdf --toc`. Mermaid-Diagramme vorher als PNG/SVG exportieren,
-  z.B. über <https://mermaid.live>.
+- **Pandoc**: `cd bericht && pandoc bericht.md -o bericht.pdf --toc`. Die Diagramme sind bereits als PNG in
+  `bericht/bilder/` eingebunden (aus den Mermaid-Quellen in `docs/diagramme/` erzeugt, z.B. über <https://mermaid.live>).

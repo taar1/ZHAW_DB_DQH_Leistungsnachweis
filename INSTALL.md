@@ -17,7 +17,6 @@ ausgeführt wird.
 | Compute | *Serverless* (in der Free Edition automatisch vorhanden) |
 | Katalog | `workspace` (Standard in der Free Edition). Es werden die Schemas `post_oltp`, `post_dwh_bronze`, `post_dwh_silver`, `post_dwh_gold` angelegt. |
 | Optional: Python 3.9+ | Nur nötig, wenn die Beispieldaten neu generiert werden sollen (`scripts/generate_data.py`). |
-| Optional: Power BI Desktop | Nur falls das Dashboard in Power BI statt in Databricks umgesetzt wird. |
 
 ---
 

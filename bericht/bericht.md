@@ -12,7 +12,7 @@
 
 > **Hinweis zur Arbeit am Bericht:** Stellen mit **TODO** müssen wir noch ergänzen (Screenshots, Resultate aus
 > Databricks, Interpretation). Die Diagramme liegen als Mermaid-Quellen in `docs/diagramme/` und sind hier
-> eingebettet. Bei Änderungen beide Stellen nachführen.
+> als Bilder (`bericht/bilder/`) eingebunden. Nach einer Änderung an einer `.mmd`-Datei das Bild neu erzeugen.
 
 ### Schnellstart: Projekt in Databricks nachvollziehen
 
@@ -113,81 +113,9 @@ Insgesamt sind es **37 Produkte**. Liechtenstein gehört tariflich zum Inland.
 Quelle: [`docs/diagramme/erm_oltp.mmd`](../docs/diagramme/erm_oltp.mmd). Notation: Crow's Foot; `PK` = Primärschlüssel,
 `FK` = Fremdschlüssel, `UK` = alternativer (fachlicher) Schlüssel.
 
-```mermaid
-erDiagram
-    LAND ||--o{ KUNDE : "Wohnsitz/Sitz von"
-    LAND ||--o{ EMPFAENGER : "Zielland von"
-    KUNDE ||--o{ AUFTRAG : "erteilt"
-    VERKAUFSKANAL ||--o{ AUFTRAG : "wird verkauft über"
-    AUFTRAG ||--|{ SENDUNG : "umfasst (ID-Beziehung)"
-    PRODUKT ||--o{ SENDUNG : "wird versandt als"
-    EMPFAENGER ||--o{ SENDUNG : "empfängt"
+![ER-Modell der operativen Datenbank post_oltp](bilder/erm_oltp.png)
 
-    LAND {
-        string land_code PK "ISO-Code"
-        string land_name
-        string zone "CH / EUROPA / WELT"
-    }
-    KUNDE {
-        int kunde_id PK
-        string kundentyp "PRIVAT / GESCHAEFT"
-        string vorname
-        string nachname
-        string firmenname "nur Geschäftskunden"
-        string email
-        string strasse
-        string plz
-        string ort
-        string land_code FK
-        date registriert_am
-    }
-    VERKAUFSKANAL {
-        int kanal_id PK
-        string kanal_name
-        string kanal_typ "PHYSISCH / DIGITAL"
-    }
-    PRODUKT {
-        int produkt_id PK
-        string produkt_name
-        string sendungsart "BRIEF / PAKET"
-        string zone "CH / EUROPA / WELT"
-        string service "A-POST, B-POST, PRIORITY, ECONOMY, SAME-DAY"
-        int max_gewicht_g
-        int laufzeit_soll_werktage
-        decimal preis_chf
-    }
-    EMPFAENGER {
-        int empfaenger_id PK
-        string name
-        string strasse
-        string plz
-        string ort
-        string land_code FK
-    }
-    AUFTRAG {
-        int auftrag_id PK
-        int kunde_id FK
-        int kanal_id FK
-        date auftrag_datum
-        decimal betrag_total_chf
-    }
-    SENDUNG {
-        int auftrag_id PK,FK "ID-Beziehung zu AUFTRAG"
-        int position_nr PK
-        string tracking_nr UK "nur Pakete, sonst NULL"
-        int produkt_id FK
-        int empfaenger_id FK
-        int gewicht_g
-        decimal preis_chf
-        date aufgabe_datum
-        date soll_zustell_datum
-        date zustell_datum
-        string status "UNTERWEGS, ZUGESTELLT, RETOURNIERT, VERLOREN"
-    }
-```
-
-> **TODO:** Für das PDF das Diagramm als Bild exportieren (z.B. mermaid.live → PNG) und hier einfügen.
-> Ergänzend kann man einen Screenshot des ER-Diagramms aus dem Databricks *Catalog Explorer*
+> **Optional:** Ergänzend einen Screenshot des ER-Diagramms aus dem Databricks *Catalog Explorer*
 > (Schema `post_oltp` → Tabelle → *Relationships*) einfügen.
 
 ### 2.2 Entitätstypen
@@ -403,67 +331,7 @@ Granularität, damit lassen sich alle Kennzahlen beliebig aggregieren.
 
 Quelle: [`docs/diagramme/sternschema_sendung.mmd`](../docs/diagramme/sternschema_sendung.mmd)
 
-```mermaid
-erDiagram
-    DIM_DATUM ||--o{ FACT_SENDUNG : "Aufgabedatum"
-    DIM_KUNDE ||--o{ FACT_SENDUNG : "Absender"
-    DIM_PRODUKT ||--o{ FACT_SENDUNG : "Produkt"
-    DIM_KANAL ||--o{ FACT_SENDUNG : "Verkaufskanal"
-    DIM_ZIELLAND ||--o{ FACT_SENDUNG : "Empfängerland"
-
-    FACT_SENDUNG {
-        int auftrag_id PK "Grain: 1 Zeile = 1 Sendung"
-        int position_nr PK
-        int datum_key FK "YYYYMMDD"
-        int kunde_id FK
-        int produkt_id FK
-        int kanal_id FK
-        string land_code FK
-        string tracking_nr "degenerierte Dimension, nur Pakete"
-        string status "degenerierte Dimension"
-        int anzahl_sendungen "Mass (immer 1)"
-        decimal umsatz_chf "Mass, additiv"
-        int gewicht_g "Mass, additiv"
-        int laufzeit_werktage "Mass, nicht additiv"
-        int puenktlich_flag "1 = bis Soll-Datum zugestellt, nur Pakete"
-    }
-    DIM_DATUM {
-        int datum_key PK "YYYYMMDD"
-        date datum
-        int jahr "Hierarchie: Jahr > Quartal > Monat > Tag"
-        int quartal
-        string jahr_quartal
-        int monat
-        string monat_name
-        date monat_start
-        string wochentag
-    }
-    DIM_KUNDE {
-        int kunde_id PK
-        string kundentyp "Hierarchie: Kundentyp > Kunde"
-        string name "Firma bzw. Vor- und Nachname"
-        string ort
-        string land_code
-    }
-    DIM_PRODUKT {
-        int produkt_id PK
-        string produkt_name
-        string sendungsart "Hierarchie: Sendungsart > Zone > Service > Produkt"
-        string zone
-        string service
-        int laufzeit_soll_werktage
-    }
-    DIM_KANAL {
-        int kanal_id PK
-        string kanal_name
-        string kanal_typ "Hierarchie: Kanaltyp > Kanal"
-    }
-    DIM_ZIELLAND {
-        string land_code PK "XX = unbekannt"
-        string land_name
-        string zone "Hierarchie: Zone > Land"
-    }
-```
+![Sternschema des Geschäftsobjekts Sendung](bilder/sternschema_sendung.png)
 
 Die **Faktentabelle** `fact_sendung` enthält die Kennzahlen und die Schlüssel auf die Dimensionen. Die
 **Dimensionstabellen** beschreiben den Kontext einer Sendung: *wann* (Datum), *wer* (Kunde), *was* (Produkt),
@@ -505,19 +373,7 @@ Die **Faktentabelle** `fact_sendung` enthält die Kennzahlen und die Schlüssel 
 
 Quelle: [`docs/diagramme/medaillon_architektur.mmd`](../docs/diagramme/medaillon_architektur.mmd)
 
-```mermaid
-flowchart LR
-    SRC[("Operative DB<br/>post_oltp<br/>7 Tabellen")]
-    B["Bronze<br/>post_dwh_bronze<br/>1:1-Kopie + Ladezeitpunkt"]
-    S["Silver<br/>post_dwh_silver<br/>bereinigt, DQ-Flags,<br/>dq_protokoll"]
-    G["Gold<br/>post_dwh_gold<br/>Sternschema"]
-    D["Dashboard"]
-
-    SRC -->|"10_bronze_laden"| B
-    B -->|"20_silver_bereinigen"| S
-    S -->|"30_gold_sternschema"| G
-    G --> D
-```
+![Medaillon-Architektur des Datawarehouse](bilder/medaillon_architektur.png)
 
 | Schicht | Schema | Inhalt | ETL-Notebook |
 |---|---|---|---|
@@ -633,7 +489,7 @@ Erste Beobachtungen aus den Daten (als Grundlage für die Interpretation):
 | `bericht.pdf` | Dieser Bericht |
 | `post_leistungsnachweis.dbc` | Databricks-Export: SQL-Notebooks (`sql/`) und ETL-Notebooks (`databricks/`) |
 | `INSTALL.md` | Installationsanleitung |
-| `docs/diagramme/*.mmd` | Mermaid-Quellen der Diagramme |
+| `docs/diagramme/*.mmd` | Mermaid-Quellen der Diagramme (Bilder in `bericht/bilder/`) |
 | `sql/02_…` bis `sql/04_…` | Beispieldaten als INSERT-Skripte (generiert) |
 | `scripts/generate_data.py` | Datengenerator |
 
