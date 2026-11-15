@@ -7,3 +7,5 @@ __pycache__/
 Thumbs.db
 ~$*
 build/
+node_modules/
+bericht/bericht.html

@@ -1,0 +1,13 @@
+{
+  "name": "bericht-pdf",
+  "private": true,
+  "type": "module",
+  "description": "Erzeugt bericht/bericht.pdf aus bericht/bericht.md (Markdown -> HTML -> PDF via Chrome)",
+  "scripts": {
+    "pdf": "node build_pdf.mjs"
+  },
+  "dependencies": {
+    "marked": "14.1.4",
+    "puppeteer-core": "23.11.1"
+  }
+}

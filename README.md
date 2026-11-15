@@ -44,8 +44,15 @@ Truth*. Für die Abgabe wird der Ordner aus **einem** Workspace als `.dbc` expor
 
 ## Bericht als PDF erzeugen
 
-Der Bericht ist in Markdown geschrieben (versionierbar). Für die Abgabe gibt es zum Beispiel diese Wege:
+Der Bericht ist in Markdown geschrieben (versionierbar). Das PDF wird mit einem eigenen Skript erzeugt
+(Markdown → HTML → PDF über Chrome, A4, weisser Hintergrund, Seitenzahlen; Layout in `scripts/pdf/bericht.css`):
 
-- **VS Code** mit der Erweiterung *Markdown PDF* (rendert auch Mermaid). Rechtsklick im Editor → *Markdown PDF: Export (pdf)*.
-- **Pandoc**: `cd bericht && pandoc bericht.md -o bericht.pdf --toc`. Die Diagramme sind bereits als PNG in
-  `bericht/bilder/` eingebunden (aus den Mermaid-Quellen in `docs/diagramme/` erzeugt, z.B. über <https://mermaid.live>).
+```bash
+cd scripts/pdf
+npm install      # nur beim ersten Mal
+npm run pdf      # schreibt bericht/bericht.pdf
+```
+
+Voraussetzung: Node.js und Chrome oder Edge (Pfad bei Bedarf über `CHROME_PATH` setzen). Arbeitshinweise im Bericht
+(Blöcke mit **TODO** oder **Hinweis zur Arbeit**) werden im PDF weggelassen. Die Diagramme sind als PNG in
+`bericht/bilder/` eingebunden (aus den Mermaid-Quellen in `docs/diagramme/` erzeugt).
