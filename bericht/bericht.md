@@ -235,9 +235,10 @@ Für das Datawarehouse ist `post_oltp` die Quelle, aus der die Bronze-Schicht ge
 Der Generator arbeitet mit einem **fixen Zufalls-Seed**, die Daten sind also reproduzierbar. Er simuliert den
 Geschäftsprozess, damit die Auswertungen realistische Muster zeigen:
 
-- Kunden haben einen **bevorzugten Kanal**; digitale Kanäle gewinnen über die Jahre Anteile.
+- Kunden haben einen **bevorzugten Kanal**. Geschäftskunden bestellen vor allem digital (Geschäftskundenportal,
+  WebStamp), Privatkunden häufiger in der Filiale.
 - **Saisonalität:** Spitzen im November (Black Friday) und Dezember, wenig Aufträge an Sonn- und Feiertagen.
-  Der Briefanteil sinkt über die Zeit.
+  Briefe machen über den ganzen Zeitraum rund 40 % der Sendungen aus.
 - Das **Produkt** passt zur Zone des Empfängers, das **Gewicht** zur Gewichtsklasse des Produkts.
 - Das **Soll-Zustelldatum** ergibt sich aus der Produktlaufzeit in Werktagen. Rund 6–7 % der Pakete sind verspätet,
   vor Weihnachten mehr. Dazu kommen wenige Retouren und verlorene Pakete.
@@ -462,15 +463,47 @@ Datenquelle verwendet. So ist die Abfragelogik im Repository versioniert.
 | F2 Verkaufskanäle | `v_f2_umsatz_kanal`, `v_f2_digital_quartal` | Balken: Umsatz pro Kanal, Farbe = Kundentyp; Linie: Anteil digital pro Quartal |
 | F3 Pünktlichkeit (Pakete) | `v_f3_puenktlichkeit_service`, `v_f3_puenktlichkeit_monat` | Balken: Quote pro Zone und Service; Linie: Quote pro Monat, Farbe = Zone |
 
-> **TODO (Team):** Pro Frage einen Screenshot des Dashboards und 2–3 Sätze Interpretation einfügen.
+Die Daten reichen bis zum 09.11.2026. Der letzte Monat (November 2026) und das letzte Quartal (2026-Q4) sind deshalb
+unvollständig, was bei der Interpretation der Zeitreihen berücksichtigt werden muss.
 
-Erste Beobachtungen aus den Daten (als Grundlage für die Interpretation):
+### 9.1 Kennzahlen
 
-- Pakete machen rund 60 % der Sendungen, aber über 90 % des Umsatzes aus.
-- Im Dezember werden deutlich mehr Sendungen aufgegeben (2025: rund 1.6× so viele wie im Juni).
-- Die Pünktlichkeit der Pakete liegt im Inland bei rund 94–96 %, international bei 74–91 % (gesamt 93.4 %).
-  Am schlechtesten schneidet Economy in die Zone Welt ab.
-- Der Anteil digitaler Kanäle liegt bei rund 55–65 % des Umsatzes und schwankt stark von Quartal zu Quartal.
+![Dashboard – Kennzahlen](bilder/dashboard_uebersicht.png)
+
+Über den ganzen Zeitraum wurden 12'134 Sendungen mit einem Umsatz von 153'541 CHF verkauft (Ø 12.65 CHF pro
+Sendung). 58.5 % des Umsatzes laufen über digitale Kanäle, 93.4 % der zugestellten Pakete kommen pünktlich an.
+
+### 9.2 F1 – Brief vs. Paket
+
+![Dashboard – F1 Brief vs. Paket](bilder/dashboard_f1.png)
+
+Pakete machen rund 60 % der Sendungen, aber über 90 % des Umsatzes aus: Ein Brief bringt im Schnitt rund 2 CHF,
+ein Paket knapp 20 CHF. Der Briefanteil bleibt über die drei Jahre stabil bei rund 40 % der Sendungen. Beide
+Sendungsarten zeigen eine deutliche Saisonalität mit Spitzen im November (Black Friday) und Dezember (Weihnachten),
+bei Paketen ausgeprägter: Im Dezember 2024 wurden 433 Pakete aufgegeben, im Juni 2025 nur 229. Der Einbruch am
+rechten Rand ist kein echter Rückgang, sondern der unvollständige November 2026.
+
+### 9.3 F2 – Verkaufskanäle
+
+![Dashboard – F2 Verkaufskanäle](bilder/dashboard_f2.png)
+
+Der wichtigste Kanal ist das Geschäftskundenportal bzw. die Versandschnittstelle mit rund 36 % des Umsatzes,
+praktisch ausschliesslich von Geschäftskunden. Geschäftskunden nutzen zudem Online-Porto/WebStamp und Abholung
+pick@home stark. Privatkunden kaufen vor allem in der Postfiliale, danach folgen Post-App und My Post 24-Automaten.
+Der Anteil der digitalen Kanäle schwankt von Quartal zu Quartal zwischen 54 % und 65 %, ein klarer Wachstumstrend ist
+in den drei Jahren nicht erkennbar. Die Schwankungen entstehen, weil wenige grosse Geschäftskunden mit vielen
+Sendungen pro Auftrag den Umsatz dominieren. Der Höchstwert im 4. Quartal 2026 ist nur eingeschränkt aussagekräftig,
+da dieses Quartal erst bis zum 9. November erfasst ist.
+
+### 9.4 F3 – Pünktlichkeit der Pakete
+
+![Dashboard – F3 Pünktlichkeit](bilder/dashboard_f3.png)
+
+Im Inland werden 94–96 % der Pakete pünktlich zugestellt, ins Ausland deutlich weniger: Europa 82–86 %, Welt 74 %
+(Economy) bis 91 % (Priority). International schneidet Economy klar schlechter ab als Priority. Im Dezember sinkt die
+Pünktlichkeit in allen Zonen spürbar, im Inland von 95.5 % auf 91.9 %, in die Zone Welt von 82.6 % auf 74.4 %. Der
+Weihnachtseffekt ist damit nachweisbar. Die starken monatlichen Schwankungen bei Europa und Welt entstehen durch die
+geringe Anzahl Auslandpakete pro Monat (oft unter 30) und sind deshalb vorsichtig zu interpretieren.
 
 ---
 
@@ -501,9 +534,16 @@ Siehe [`INSTALL.md`](../INSTALL.md). Die Kurzfassung steht am Anfang des Bericht
 
 Wir haben den KI-Assistenten **Claude** (Anthropic) unterstützend eingesetzt, und zwar für:
 
-- das Erstellen des SQL-Schemas der operativen Datenbank (`sql/01_create_schema.sql`) und
+- das Erstellen des SQL-Schemas der operativen Datenbank (`sql/01_create_schema.sql`),
 - das Generieren der Testdaten, mit denen die Datenbank befüllt wird (Datengenerator `scripts/generate_data.py`
-  und die daraus erzeugten INSERT-Skripte).
+  und die daraus erzeugten INSERT-Skripte),
+- das Erstellen der ETL-Notebooks und der Dashboard-Sichten (`databricks/`),
+- das Erzeugen der Diagramme aus den Mermaid-Quellen sowie Entwürfe für Textteile des Berichts.
 
-Die Vorgaben (Szenario, Entitäten, Umfang) kamen von uns. Die Resultate haben wir geprüft, indem wir die Skripte in
-Databricks ausgeführt und die Daten mit den Prüfabfragen (`sql/05_pruefabfragen.sql`) kontrolliert haben.
+Das Dashboard haben wir mit **Databricks Genie** aus einer Beschreibung erzeugt und anschliessend von Hand
+angepasst (z.B. ein falsch konfiguriertes Liniendiagramm korrigiert).
+
+Die Vorgaben (Szenario, Entitäten, Fragestellungen, Umfang) kamen von uns. Die Resultate haben wir geprüft, indem wir
+alle Skripte und Notebooks in Databricks ausgeführt, die Daten mit den Prüfabfragen (`sql/05_pruefabfragen.sql`)
+und den Kontrollabfragen der ETL-Notebooks kontrolliert und die Zahlen im Dashboard mit diesen Werten verglichen
+haben. Fachliche Korrekturen haben wir selbst eingebracht, z.B. dass normale Briefe keine Sendungsnummer haben.
