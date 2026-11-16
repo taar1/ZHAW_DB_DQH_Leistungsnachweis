@@ -109,23 +109,49 @@ Quelle: [`docs/diagramme/erm_oltp.mmd`](../docs/diagramme/erm_oltp.mmd). Notatio
 
 ![ER-Modell der operativen Datenbank post_oltp](bilder/erm_oltp.png)
 
+**Legende der Linienenden (Crow's Foot):** Das Zeichen am Ende einer Linie gibt an, wie viele Datensätze auf dieser
+Seite zu einem Datensatz der anderen Seite gehören.
+
+| Zeichen am Linienende | Bedeutung | Beispiel |
+|---|---|---|
+| zwei Striche `‖` | genau eins (1) | ein Auftrag gehört zu genau einem Kunden |
+| Kreis und Krähenfuss `○<` | keins, eins oder mehrere (0..n) | ein Kunde hat 0..n Aufträge |
+| Strich und Krähenfuss `\|<` | eins oder mehrere (1..n) | ein Auftrag hat mindestens eine Sendung |
+
+Die Beschriftung der Linie nennt die Beziehung (z.B. „erteilt“). Die ID-Beziehung zwischen Auftrag und Sendung ist
+mit „(ID-Beziehung)“ markiert, siehe 2.4.
+
 ### 2.2 Entitätstypen
 
-| Entitätstyp | Bedeutung | Schlüssel |
-|---|---|---|
-| `LAND` | Land mit Tarifzone (CH, EUROPA, WELT) | `land_code` (ISO 3166) |
-| `KUNDE` | Absender und Käufer, Privat- oder Geschäftskunde, inkl. Adresse | `kunde_id` |
-| `VERKAUFSKANAL` | Kanal des Verkaufs (physisch/digital) | `kanal_id` |
-| `PRODUKT` | Versandprodukt mit Zone, Service, Gewichtslimite, Soll-Laufzeit und Preis | `produkt_id` |
-| `EMPFAENGER` | Empfänger einer Sendung, inkl. Adresse | `empfaenger_id` |
-| `AUFTRAG` | Kauf eines Kunden über einen Kanal | `auftrag_id` |
-| `SENDUNG` | Position eines Auftrags = eine Sendung | (`auftrag_id`, `position_nr`) |
+| Entitätstyp | Art | Bedeutung | Schlüssel |
+|---|---|---|---|
+| `LAND` | Stammdaten | Land mit Tarifzone (CH, EUROPA, WELT) | `land_code` (ISO 3166) |
+| `KUNDE` | Stammdaten | Absender und Käufer, Privat- oder Geschäftskunde, inkl. Adresse | `kunde_id` |
+| `VERKAUFSKANAL` | Stammdaten | Kanal des Verkaufs (physisch/digital) | `kanal_id` |
+| `PRODUKT` | Stammdaten | Versandprodukt mit Zone, Service, Gewichtslimite, Soll-Laufzeit und Preis | `produkt_id` |
+| `EMPFAENGER` | Stammdaten | Empfänger einer Sendung, inkl. Adresse | `empfaenger_id` |
+| `AUFTRAG` | Bewegungsdaten | Kauf eines Kunden über einen Kanal | `auftrag_id` |
+| `SENDUNG` | Beziehungstabelle, abhängig von `AUFTRAG` | Position eines Auftrags = eine Sendung | (`auftrag_id`, `position_nr`) |
+
+Alle Tabellen ausser `SENDUNG` sind normale Entitätstabellen mit eigenem Schlüssel. **Stammdaten** ändern sich
+selten (Kunden, Produkte, Länder), **Bewegungsdaten** entstehen laufend mit jedem Kauf.
+
+`SENDUNG` ist die einzige **Beziehungstabelle**: Sie verbindet einen Auftrag mit einem Produkt und einem Empfänger.
+Damit löst sie die m:n-Beziehung zwischen `AUFTRAG` und `PRODUKT` auf, denn ein Auftrag kann mehrere Produkte
+enthalten und ein Produkt kommt in vielen Aufträgen vor. Zusätzlich hat sie eigene Attribute (Gewicht, Preis,
+Daten, Status). Ihr Schlüssel hängt vom Auftrag ab (ID-Beziehung, siehe 2.4): Ohne Auftrag gibt es keine Sendung.
 
 Die Adresse steht direkt in `KUNDE` bzw. `EMPFAENGER`. Eine eigene Adresstabelle wäre sauberer normalisiert, bringt
 für unsere Auswertungen aber nichts.
 
 `KUNDE` und `EMPFAENGER` sind getrennt, weil sie verschiedene Rollen haben: Der Kunde kauft und bezahlt, der
 Empfänger ist nur die Zieladresse, oft im Ausland und ohne Beziehung zur Post.
+
+Beim Empfänger sind `name`, `ort` und `land_code` Pflichtfelder (`NOT NULL`), denn ohne sie ist keine Zustellung
+möglich und das Land bestimmt Zone und Preis. `strasse` und `plz` sind dagegen optional: Einige Länder kennen keine
+Postleitzahl, in unseren Daten betrifft das die 14 Empfänger in den Vereinigten Arabischen Emiraten (`plz` = NULL).
+Ebenso hätten Postfach- oder postlagernde Adressen keine Strasse. Das ERD zeigt Pflichtfelder nicht an; sie sind im
+Schema (`sql/01_create_schema.sql`) definiert.
 
 ### 2.3 Beziehungen und Kardinalitäten
 
@@ -308,6 +334,9 @@ jede gröbere Sicht (Monat, Kanal, Zone …) zusammenzählen.
 Quelle: [`docs/diagramme/sternschema_sendung.mmd`](../docs/diagramme/sternschema_sendung.mmd)
 
 ![Sternschema des Geschäftsobjekts Sendung](bilder/sternschema_sendung.png)
+
+Die Linienenden sind gleich zu lesen wie im ER-Diagramm (Legende in 2.1): Jede Dimensionszeile gehört zu 0..n
+Fakten, jede Faktenzeile zu genau einer Zeile pro Dimension.
 
 Die **Faktentabelle** `fact_sendung` enthält die Kennzahlen und die Schlüssel auf die Dimensionen. Die
 **Dimensionen** beschreiben den Zusammenhang einer Sendung: wann (Datum), wer (Kunde), was (Produkt), wie
