@@ -133,8 +133,9 @@ mit „(ID-Beziehung)“ markiert, siehe 2.4.
 | `AUFTRAG` | Bewegungsdaten | Kauf eines Kunden über einen Kanal | `auftrag_id` |
 | `SENDUNG` | Beziehungstabelle, abhängig von `AUFTRAG` | Position eines Auftrags = eine Sendung | (`auftrag_id`, `position_nr`) |
 
-Alle Tabellen ausser `SENDUNG` sind normale Entitätstabellen mit eigenem Schlüssel. **Stammdaten** ändern sich
-selten (Kunden, Produkte, Länder), **Bewegungsdaten** entstehen laufend mit jedem Kauf.
+Alle Tabellen ausser `SENDUNG` und `AUFTRAG` sind normale Entitätstabellen mit eigenem Schlüssel.
+**Stammdaten** (Kunden, Produkte, Länder) ändern sich selten und existieren unabhängig von anderen Tabellen.
+**Bewegungsdaten** entstehen laufend im operativen Geschäft, zum Beispiel mit jedem Auftrag.
 
 `SENDUNG` ist die einzige **Beziehungstabelle**: Sie verbindet einen Auftrag mit einem Produkt und einem Empfänger.
 Damit löst sie die m:n-Beziehung zwischen `AUFTRAG` und `PRODUKT` auf, denn ein Auftrag kann mehrere Produkte
