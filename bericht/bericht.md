@@ -514,7 +514,7 @@ Quelle: [`docs/diagramme/medaillon_architektur.mmd`](../docs/diagramme/medaillon
 | Gold | `post_dwh_gold` | Sternschema (Kapitel 6) für das Dashboard | `30_gold_sternschema` |
 
 Die Schichten entsprechen der DWH-Referenzarchitektur aus dem Unterricht (DWH-3, Folien 25–29): Bronze ist die
-Staging Area, Silver die Integration, Gold die Data Marts für die Analyse.
+Staging Area, Silver die Integrationsschicht und Gold die Analyseschicht mit dem Star-Schema.
 
 Bei jedem Lauf werden alle Schichten komplett neu geladen (*Full Load* mit `CREATE OR REPLACE TABLE … AS SELECT`).
 Bei unserer Datenmenge ist das am einfachsten. Im Betrieb würde man nur die Änderungen laden (inkrementell).
@@ -525,18 +525,6 @@ Die Notebooks liegen im Ordner [`databricks/`](../databricks), `00_etl_alles` f�
 - **`20_silver_bereinigen`** vereinheitlicht Ortsnamen und E-Mail-Adressen, führt die vier Datenqualitätsprüfungen aus (Kapitel 8), markiert fehlerhafte Datensätze und schreibt das Prüfprotokoll.
 - **`30_gold_sternschema`** erzeugt `dim_datum` als Kalender (ein Eintrag pro Tag 2024–2026), übernimmt die übrigen Dimensionen aus Silver und baut `fact_sendung`. Dabei werden Laufzeit und Pünktlichkeit berechnet. Eine Kontrollabfrage prüft, dass jede Sendung genau einmal vorkommt und jeder Schlüssel eine Dimension findet.
 - **`40_dashboard_views`** legt pro Frage eine Sicht für das Dashboard an (Kapitel 9).
-
-Auszug aus `30_gold_sternschema` (Berechnung der Pünktlichkeit):
-
-```sql
-CASE
-  WHEN s.status = 'ZUGESTELLT' AND s.zustell_datum IS NOT NULL
-    THEN CASE WHEN s.zustell_datum <= s.soll_zustell_datum THEN 1 ELSE 0 END
-END AS puenktlich_flag
-```
-
-> **TODO (Team):** Screenshot der Schemas `post_dwh_bronze`, `post_dwh_silver` und `post_dwh_gold` im Catalog
-> Explorer einfügen.
 
 ---
 
