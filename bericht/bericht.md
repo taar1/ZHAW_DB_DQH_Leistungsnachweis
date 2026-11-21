@@ -577,39 +577,29 @@ Die Daten reichen bis zum 09.11.2026. November 2026 und das 4. Quartal 2026 sind
 
 ![Dashboard – Kennzahlen](bilder/dashboard_uebersicht.png)
 
-Insgesamt wurden 12'134 Sendungen für 153'541 CHF verkauft, im Schnitt 12.65 CHF pro Sendung. 58.5 % des Umsatzes
-laufen über digitale Kanäle, 93.4 % der zugestellten Pakete kommen pünktlich an.
+Im betrachteten Zeitraum wurden insgesamt 12'134 Sendungen verkauft, die einen Umsatz von 153'541 CHF erzielten. Pro Sendung ergibt das im Schnitt 12.65 CHF. Mehr als die Hälfte des Umsatzes, nämlich 58.5 %, entfällt auf die digitalen Verkaufskanäle. Bei den Paketen, die zugestellt wurden, trafen 93.4 % pünktlich ein.
 
 ### 9.2 F1 – Brief vs. Paket
 
 ![Dashboard – F1 Brief vs. Paket](bilder/dashboard_f1.png)
 
-Pakete machen rund 60 % der Sendungen, aber über 90 % des Umsatzes aus. Ein Brief bringt im Schnitt rund 2 CHF, ein
-Paket knapp 20 CHF. Der Briefanteil bleibt über die drei Jahre stabil bei rund 40 %. Beide Sendungsarten haben
-Spitzen im November (Black Friday) und Dezember (Weihnachten), Pakete deutlich stärker: Im Dezember 2024 waren es 433
-Pakete, im Juni 2025 nur 229. Der Einbruch ganz rechts ist kein echter Rückgang, sondern der unvollständige
-November 2026.
+Pakete machen rund 60 % der Sendungen aus, erzielen aber über 90 % des Umsatzes. Ein Brief bringt im Schnitt rund 2 CHF ein, ein Paket knapp 20 CHF. Der Anteil der Briefe bleibt über die drei Jahre stabil bei rund 40 %.
+Beide Sendungsarten haben Spitzen im November (Black Friday) und im Dezember (Weihnachten), bei den Paketen fallen sie deutlich stärker aus. Im Dezember 2024 wurden 433 Pakete verschickt, im Juni 2025 nur 229. Der Einbruch am rechten Rand der Grafik ist kein echter Rückgang, sondern liegt daran, dass der letzte Monat, der November 202X, in den Daten nur unvollständig enthalten ist.
 
 ### 9.3 F2 – Verkaufskanäle
 
 ![Dashboard – F2 Verkaufskanäle](bilder/dashboard_f2.png)
 
-Der wichtigste Kanal ist das Geschäftskundenportal bzw. die Versandschnittstelle mit rund 36 % des Umsatzes, fast
-nur von Geschäftskunden. Geschäftskunden nutzen auch WebStamp und pick@home stark. Privatkunden kaufen vor allem in
-der Postfiliale, danach in der Post-App und am My Post 24-Automaten. Der digitale Anteil schwankt pro Quartal
-zwischen 54 % und 65 %, einen klaren Trend gibt es nicht. Die Schwankungen kommen daher, dass wenige grosse
-Geschäftskunden mit vielen Sendungen den Umsatz prägen. Der Höchstwert im 4. Quartal 2026 sagt wenig aus, weil das
-Quartal erst bis zum 9. November erfasst ist.
+Der wichtigste Verkaufskanal ist das Geschäftskundenportal, über die rund 36 % des Umsatzes laufen. Genutzt wird dieser fast ausschliesslich von Geschäftskunden. Diese kaufen auch bei Online-Portal/WebStamp und pick@home einen grossen Teil ihrer Sendungen. Privatkunden kaufen dagegen vor allem in der Postfiliale, gefolgt von der Post-App und dem My Post 24-Automaten.
+Der digitale Anteil am Umsatz schwankt von Quartal zu Quartal zwischen 54 % und 65 %, ein klarer Trend ist nicht erkennbar. Die Schwankungen entstehen, weil wenige grosse Geschäftskunden mit vielen Sendungen den Umsatz prägen. Der Höchstwert im 4. Quartal 2026 ist wenig aussagekräftig, da dieses Quartal erst bis zum 9. November erfasst ist.
 
 ### 9.4 F3 – Pünktlichkeit der Pakete
 
 ![Dashboard – F3 Pünktlichkeit](bilder/dashboard_f3.png)
 
-Im Inland kommen 94–96 % der Pakete pünktlich an, im Ausland deutlich weniger: Europa 82–86 %, Welt 74 % (Economy)
-bis 91 % (Priority). International ist Economy klar weniger pünktlich als Priority. Im Dezember sinkt die
-Pünktlichkeit überall, im Inland von 95.5 % auf 91.9 %, in die Zone Welt von 82.6 % auf 74.4 %. Der
-Weihnachtseffekt ist also sichtbar. Die starken Ausschläge bei Europa und Welt pro Monat kommen von der kleinen
-Anzahl Auslandpakete (oft unter 30 pro Monat), einzelne Verspätungen fallen da stark ins Gewicht.
+Im Inland kommen 94–96 % der Pakete pünktlich an, im Ausland deutlich weniger: In der Zone Europa sind es 82–86 %, in der Zone Welt zwischen 74 % bei Economy und 91 % bei Priority. International ist Economy damit klar weniger pünktlich als Priority.
+Im Dezember sinkt die Pünktlichkeit in allen Zonen. Im Inland fällt sie von 95.5 % auf 91.9 %, in der Zone Welt von 82.6 % auf 74.4 %. Der Weihnachtseffekt ist also deutlich sichtbar.
+Die starken monatlichen Ausschläge bei Europa und Welt erklären sich durch die geringe Zahl an Auslandpaketen, oft unter 30 pro Monat. Einzelne Verspätungen fallen dadurch stark ins Gewicht.
 
 ---
 
@@ -638,7 +628,7 @@ Siehe [`INSTALL.md`](../INSTALL.md). Die Kurzfassung steht am Anfang des Bericht
 
 ### 11.3 Verwendung von KI-Werkzeugen
 
-Wir haben den KI-Assistenten **Claude** (Anthropic) eingesetzt für:
+Wir haben den KI-Assistenten **Claude** (Anthropic) zur Unterstützung eingesetzt für:
 
 - das SQL-Schema der operativen Datenbank (`sql/01_create_schema.sql`),
 - die Testdaten (Datengenerator `scripts/generate_data.py` und die erzeugten INSERT-Skripte),
