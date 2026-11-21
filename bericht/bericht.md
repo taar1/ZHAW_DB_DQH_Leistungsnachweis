@@ -368,8 +368,7 @@ SQL-INSERT-Skripte, die `sql/00_setup_alles` in `post_oltp` lädt:
 | `sql/03_insert_kunden_empfaenger.sql` | `kunde`, `empfaenger` |
 | `sql/04_insert_auftraege_sendungen.sql` | `auftrag`, `sendung` |
 
-Die Skripte ersetzen den laufenden Betrieb, in der Praxis würden die Daten im Postsystem selbst entstehen. Für das
-Datawarehouse ist `post_oltp` die Quelle (Kapitel 7).
+Die Skripte ersetzen den laufenden Betrieb, in der Praxis würden die Daten im Postsystem selbst entstehen. 
 
 Der Generator verwendet einen **festen Zufalls-Seed**, die Daten sind also bei jedem Lauf gleich. Damit die
 Auswertungen realistisch aussehen, bildet er typische Muster nach:
@@ -442,7 +441,7 @@ Alle Kennzahlen lassen sich nach Zeit (Jahr, Quartal, Monat), Produkt, Kanal, Ku
 
 ### 5.3 Fragestellungen
 
-Diese drei Fragen beantwortet das Dashboard (Kapitel 9):
+Diese drei Fragen werden im Dashboard (Kapitel 9) beantwortet:
 
 - **F1 – Brief vs. Paket:** Wie entwickeln sich Menge und Umsatz von Briefen und Paketen von Monat zu Monat? Welche Saisonalität gibt es?
 - **F2 – Verkaufskanäle:** Wie viel Umsatz bringt welcher Kanal und Kundentyp, und wächst der digitale Anteil?
