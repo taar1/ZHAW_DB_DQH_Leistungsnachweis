@@ -142,11 +142,10 @@ Damit löst sie die m:n-Beziehung zwischen `AUFTRAG` und `PRODUKT` auf, denn ein
 enthalten und ein Produkt kommt in vielen Aufträgen vor. Zusätzlich hat sie eigene Attribute (Gewicht, Preis,
 Daten, Status). Ihr Schlüssel hängt vom Auftrag ab (ID-Beziehung, siehe 2.4): Ohne Auftrag gibt es keine Sendung.
 
-Die Adresse steht direkt in `KUNDE` bzw. `EMPFAENGER`. Eine eigene Adresstabelle wäre sauberer normalisiert, bringt
-für unsere Auswertungen aber nichts.
-
-`KUNDE` und `EMPFAENGER` sind getrennt, weil sie verschiedene Rollen haben: Der Kunde kauft und bezahlt, der
-Empfänger ist nur die Zieladresse, oft im Ausland und ohne Beziehung zur Post.
+Die Adresse steht direkt in `KUNDE` bzw. `EMPFAENGER`. Eine eigene Adresstabelle wäre sauberer normalisiert,
+bringt für unsere Auswertungen aber nichts. Auch `KUNDE` und `EMPFAENGER` bleiben getrennt, weil sie verschiedene
+Rollen haben: Der Kunde kauft und bezahlt, der Empfänger ist nur die Zieladresse, oft im Ausland und ohne
+Beziehung zur Post
 
 Beim Empfänger sind `name`, `ort` und `land_code` Pflichtfelder (`NOT NULL`), denn ohne sie ist keine Zustellung
 möglich und das Land bestimmt Zone und Preis. `strasse` und `plz` sind dagegen optional: Einige Länder kennen keine
