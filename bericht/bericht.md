@@ -530,8 +530,7 @@ Die Notebooks liegen im Ordner [`databricks/`](../databricks), `00_etl_alles` f�
 
 ## 8. Datenqualitätsprüfungen im ETL-Prozess
 
-Die Prüfungen laufen beim Laden von Silver (Notebook `20_silver_bereinigen`). Verlangt sind mindestens zwei, wir
-haben vier umgesetzt:
+Die Prüfungen laufen beim Laden von Silver (Notebook `20_silver_bereinigen`). Verlangt sind mindestens zwei, es wurder vier umgesetzt:
 
 | Prüfung | Regel | Was passiert mit fehlerhaften Daten |
 |---|---|---|
@@ -540,9 +539,7 @@ haben vier umgesetzt:
 | **Datum plausibel** | `zustell_datum ≥ aufgabe_datum` | Laufzeit und Pünktlichkeit bleiben leer, zählen nicht zur Quote |
 | **Auftragstotal stimmt** | `auftrag.betrag_total_chf = Summe sendung.preis_chf` | Abweichung wird protokolliert, im DWH gilt die Summe der Sendungen |
 
-Fehlerhafte Datensätze werden nicht gelöscht, sondern markiert. Der ursprüngliche Wert bleibt in Bronze erhalten,
-bei Gewicht, Ort und Auftragstotal zusätzlich in einer eigenen Spalte in Silver. Zusätzlich werden Ortsnamen vereinheitlicht (z.B. „Zuerich“ → „Zürich“) und E-Mail-Adressen klein und ohne
-Leerzeichen gespeichert.
+Fehlerhafte Datensätze werden in Silver nicht gelöscht, sondern markiert, damit nachvollziehbar bleibt, was bereinigt wurde. Der ursprüngliche Wert bleibt in Bronze unverändert erhalten. Bei Gewicht, Ort und Auftragstotal wird er zusätzlich in einer eigenen Spalte in Silver abgelegt. Ausserdem werden Daten vereinheitlicht: Ortsnamen erhalten eine einheitliche Schreibweise (z. B. «Zuerich» → «Zürich»), und E-Mail-Adressen werden in Kleinbuchstaben und ohne Leerzeichen gespeichert.
 
 Jede Prüfung schreibt pro Lauf eine Zeile in das Prüfprotokoll `post_dwh_silver.dq_protokoll` (dq = Datenqualität). Die Tabelle wird nicht überschrieben,
 so sieht man die Entwicklung über mehrere Läufe. Im Protokoll sind die vier Prüfungen mit P1 bis P4 nummeriert
@@ -559,7 +556,6 @@ so sieht man die Entwicklung über mehrere Läufe. Im Protokoll sind die vier Pr
 
 Die Prüfungen finden genau die Fehler aus Kapitel 4.3 (beim Gewicht: 109 zu schwere + 44 fehlende Gewichte = 153).
 
-> **TODO (Team):** Screenshot des Prüfprotokolls (`dq_protokoll`) nach dem Lauf einfügen.
 
 ---
 
