@@ -194,17 +194,138 @@ ist der Schlüssel eindeutig.
 Die operative Datenbank ist im Unity Catalog das Schema **`workspace.post_oltp`**
 (DDL: [`sql/01_create_schema.sql`](../sql/01_create_schema.sql)). Alle 7 Tabellen sind **Delta-Tabellen**.
 
-Wichtige Entscheide:
+Wichtige Entscheide über alle Tabellen:
 
 - **Datentypen:** Geldbeträge als `DECIMAL` (keine Rundungsfehler wie bei `DOUBLE`), Daten als `DATE`,
   Postleitzahlen als `STRING` (ausländische PLZ enthalten Buchstaben, z.B. „SW1A 1AA“).
 - **Schlüssel:** `PRIMARY KEY` und `FOREIGN KEY` sind definiert. Databricks prüft sie aber nicht, sie dienen nur der
   Dokumentation und erscheinen im Catalog Explorer. Die referentielle Integrität prüfen wir deshalb selbst im ETL (Kapitel 8).
-- **Geprüfte Regeln:** `NOT NULL` und `CHECK` prüft Databricks bei jedem Insert, z.B. `kundentyp IN
-  ('PRIVAT','GESCHAEFT')`, `preis_chf >= 0` oder gültige Sendungsstatus.
-- **Dokumentation:** Jede Tabelle und Spalte hat einen `COMMENT`.
 
 Auszug aus der DDL:
+
+### Land
+
+Die Tabelle `land` enthält reine Stammdaten. Als Primärschlüssel dient der ISO-Code (z. B. `CH`, `DE`, `US`) und keine
+künstliche ID, da der Code stabil und in Abfragen direkt lesbar ist. Jedes Land ist genau einer Tarifzone zugeordnet
+(`CH`, `EUROPA` oder `WELT`), die den Preis einer Sendung bestimmt. Liechtenstein gehört zur Zone `CH`, weil die Post
+es tariflich wie das Inland behandelt. Ein `CHECK`-Constraint stellt sicher, dass nur diese drei Zonen vorkommen.
+
+```sql
+CREATE TABLE post_oltp.land (
+  land_code    STRING NOT NULL COMMENT 'ISO 3166-1 Alpha-2 Code, z.B. CH, DE, US',
+  land_name    STRING NOT NULL COMMENT 'Landesname (deutsch)',
+  zone         STRING NOT NULL COMMENT 'Tarifzone der Post: CH (Inland inkl. FL), EUROPA, WELT',
+  CONSTRAINT pk_land PRIMARY KEY (land_code)
+) COMMENT 'Länder und deren Tarifzone';
+
+ALTER TABLE post_oltp.land ADD CONSTRAINT chk_land_zone CHECK (zone IN ('CH', 'EUROPA', 'WELT'));
+);
+```
+### Kunde
+
+Die Tabelle `kunde` enthält alle Auftraggeber der Post, sowohl Privat- als auch Geschäftskunden. Beide Typen teilen sich
+eine Tabelle und werden über `kundentyp` unterschieden, da sich die Daten kaum unterscheiden. Bei Geschäftskunden steht
+der Firmenname in `firmenname`, und `vorname` und `nachname` bezeichnen die Kontaktperson.
+`strasse` und `plz` sind optional. Einige Länder kennen keine Postleitzahl, etwa die Vereinigten Arabischen Emirate,
+die auch in den Beispieldaten vorkommen. Zudem haben Postfach- oder postlagernde Adressen keine Strassenbezeichnung.
+Die Postleitzahl ist ein Textfeld, weil ausländische Postleitzahlen Buchstaben enthalten können.
+Über `land_code` ist jeder Kunde einem Land zugeordnet. Ein `CHECK`-Constraint begrenzt `kundentyp` auf die beiden
+zulässigen Werte.
+
+```sql
+CREATE TABLE post_oltp.kunde (
+  kunde_id         INT    NOT NULL COMMENT 'Technischer Schlüssel',
+  kundentyp        STRING NOT NULL COMMENT 'PRIVAT oder GESCHAEFT',
+  vorname          STRING          COMMENT 'Vorname (bei Geschäftskunden: Kontaktperson)',
+  nachname         STRING          COMMENT 'Nachname (bei Geschäftskunden: Kontaktperson)',
+  firmenname       STRING          COMMENT 'Firmenname (nur Geschäftskunden)',
+  email            STRING          COMMENT 'E-Mail-Adresse',
+  strasse          STRING          COMMENT 'Strasse und Hausnummer',
+  plz              STRING          COMMENT 'Postleitzahl (Text, da ausländische PLZ Buchstaben enthalten)',
+  ort              STRING NOT NULL COMMENT 'Ort',
+  land_code        STRING NOT NULL COMMENT 'FK auf land',
+  registriert_am   DATE   NOT NULL COMMENT 'Datum der Registrierung als Kunde',
+  CONSTRAINT pk_kunde PRIMARY KEY (kunde_id),
+  CONSTRAINT fk_kunde_land FOREIGN KEY (land_code) REFERENCES post_oltp.land (land_code)
+) COMMENT 'Kunden der Post (Privat- und Geschäftskunden)';
+
+ALTER TABLE post_oltp.kunde ADD CONSTRAINT chk_kunde_typ CHECK (kundentyp IN ('PRIVAT', 'GESCHAEFT'));
+```
+
+### Verkaufskanal
+
+Die Stammdatentabelle `verkaufskanal` enthält die Kanäle, über die Postprodukte verkauft werden, etwa die Postfiliale oder die Post-App.
+Mit `kanal_typ` werden sie in physische und digitale Kanäle gruppiert, abgesichert durch einen `CHECK`-Constraint.
+
+```sql
+CREATE TABLE post_oltp.verkaufskanal (
+  kanal_id     INT    NOT NULL COMMENT 'Technischer Schlüssel',
+  kanal_name   STRING NOT NULL COMMENT 'Bezeichnung, z.B. Postfiliale, Post-App',
+  kanal_typ    STRING NOT NULL COMMENT 'PHYSISCH oder DIGITAL',
+  CONSTRAINT pk_verkaufskanal PRIMARY KEY (kanal_id)
+) COMMENT 'Kanäle, über die Postprodukte verkauft werden';
+
+ALTER TABLE post_oltp.verkaufskanal ADD CONSTRAINT chk_kanal_typ CHECK (kanal_typ IN ('PHYSISCH', 'DIGITAL'));
+```
+### Produkt
+
+Die Stammdatentabelle `produkt` enthält das Sortiment der Brief- und Paketprodukte mit Sendungsart, Tarifzone, Service, Maximalgewicht, Laufzeit in Werktagen und Listenpreis in CHF. Alle Felder sind Pflicht. `CHECK`-Constraints begrenzen Sendungsart und Zone auf die zulässigen Werte und verhindern negative Preise.
+
+```sql
+CREATE TABLE post_oltp.produkt (
+  produkt_id               INT           NOT NULL COMMENT 'Technischer Schlüssel',
+  produkt_name             STRING        NOT NULL COMMENT 'Bezeichnung inkl. Format/Gewichtsklasse',
+  sendungsart              STRING        NOT NULL COMMENT 'BRIEF oder PAKET',
+  zone                     STRING        NOT NULL COMMENT 'CH, EUROPA oder WELT',
+  service                  STRING        NOT NULL COMMENT 'A-POST, B-POST, PRIORITY, ECONOMY, SAME-DAY',
+  max_gewicht_g            INT           NOT NULL COMMENT 'Maximalgewicht in Gramm',
+  laufzeit_soll_werktage   INT           NOT NULL COMMENT 'Versprochene Laufzeit in Werktagen (0 = gleicher Tag)',
+  preis_chf                DECIMAL(8,2)  NOT NULL COMMENT 'Listenpreis in CHF',
+  CONSTRAINT pk_produkt PRIMARY KEY (produkt_id)
+) COMMENT 'Sortiment der Brief- und Paketprodukte';
+
+ALTER TABLE post_oltp.produkt ADD CONSTRAINT chk_produkt_art CHECK (sendungsart IN ('BRIEF', 'PAKET'));
+ALTER TABLE post_oltp.produkt ADD CONSTRAINT chk_produkt_zone CHECK (zone IN ('CH', 'EUROPA', 'WELT'));
+ALTER TABLE post_oltp.produkt ADD CONSTRAINT chk_produkt_preis CHECK (preis_chf >= 0)
+```
+
+### Empfänger
+
+Die Tabelle `empfaenger` enthält die Empfänger von Sendungen im In- und Ausland. Sie ist von `kunde` getrennt, weil beide verschiedene Rollen haben: Der Kunde kauft und bezahlt, der Empfänger ist nur die Zieladresse, oft im Ausland und ohne Beziehung zur Post. `name`, `ort` und `land_code` sind Pflichtfelder, denn ohne sie ist keine Zustellung möglich, und das Land bestimmt Zone und Preis. `strasse` und `plz` sind wie bei `kunde` optional: Einige Länder kennen keine Postleitzahl und Postfach- oder postlagernde Adressen haben keine Strasse.
+
+```sql
+CREATE TABLE post_oltp.empfaenger (
+  empfaenger_id   INT    NOT NULL COMMENT 'Technischer Schlüssel',
+  name            STRING NOT NULL COMMENT 'Name der Person oder Firma',
+  strasse         STRING          COMMENT 'Strasse und Hausnummer',
+  plz             STRING          COMMENT 'Postleitzahl',
+  ort             STRING NOT NULL COMMENT 'Ort',
+  land_code       STRING NOT NULL COMMENT 'FK auf land (bestimmt die Zielzone)',
+  CONSTRAINT pk_empfaenger PRIMARY KEY (empfaenger_id),
+  CONSTRAINT fk_empfaenger_land FOREIGN KEY (land_code) REFERENCES post_oltp.land (land_code)
+) COMMENT 'Empfänger von Sendungen (Inland und Ausland)';
+```
+
+### Auftrag
+
+Die Tabelle `auftrag` enthält die Käufe der Kunden und gehört zu den Bewegungsdaten. Jeder Auftrag gehört zu genau einem Kunden und wurde über genau einen Verkaufskanal abgeschlossen. Beides ist über Fremdschlüssel abgesichert. Der Auftrag hält das Kaufdatum fest und enthält die einzelnen Sendungen, die in der Tabelle `sendung` nummeriert werden. Der Gesamtbetrag `betrag_total_chf` entspricht der Summe der Sendungspreise. Er ist damit abgeleitet, wird aber direkt gespeichert, damit Auswertungen nach Umsatz ohne Aggregation über `sendung` auskommen.
+
+```sql
+CREATE TABLE post_oltp.auftrag (
+  auftrag_id         INT           NOT NULL COMMENT 'Technischer Schlüssel',
+  kunde_id           INT           NOT NULL COMMENT 'FK auf kunde',
+  kanal_id           INT           NOT NULL COMMENT 'FK auf verkaufskanal',
+  auftrag_datum      DATE          NOT NULL COMMENT 'Datum des Kaufs',
+  betrag_total_chf   DECIMAL(10,2) NOT NULL COMMENT 'Total des Auftrags in CHF (= Summe der Sendungspreise)',
+  CONSTRAINT pk_auftrag PRIMARY KEY (auftrag_id),
+  CONSTRAINT fk_auftrag_kunde FOREIGN KEY (kunde_id) REFERENCES post_oltp.kunde (kunde_id),
+  CONSTRAINT fk_auftrag_kanal FOREIGN KEY (kanal_id) REFERENCES post_oltp.verkaufskanal (kanal_id)
+) COMMENT 'Aufträge (Käufe) der Kunden';
+```
+
+### Sendung
+
+Die Tabelle `sendung` enthält die einzelnen Brief- und Paketsendungen eines Auftrags und bildet den Kern der Bewegungsdaten. Eine Sendung existiert nur innerhalb eines Auftrags und wird darin durchnummeriert. Deshalb besteht der Primärschlüssel aus `auftrag_id` und `position_nr`. Zusätzlich verweist jede Sendung auf das gewählte Produkt und den Empfänger. Der Preis wird als bezahlter Betrag in `preis_chf` direkt gespeichert. Mit `soll_zustell_datum` (versprochen, gemäss Produktlaufzeit) und `zustell_datum` (effektiv) lässt sich die Pünktlichkeit der Zustellung auswerten. Die Tracking-Felder `tracking_nr`, `zustell_datum` und `status` sind optional, weil nur Pakete verfolgbar sind, hingegen bei Briefen bleiben sie leer. `CHECK`-Constraints begrenzen den Status auf die zulässigen Werte und verhindern negative Preise.
 
 ```sql
 CREATE TABLE post_oltp.sendung (
@@ -213,11 +334,21 @@ CREATE TABLE post_oltp.sendung (
   tracking_nr          STRING                 COMMENT 'Sendungsnummer, nur bei Paketen (Briefe sind nicht verfolgbar)',
   produkt_id           INT           NOT NULL COMMENT 'FK auf produkt',
   empfaenger_id        INT           NOT NULL COMMENT 'FK auf empfaenger',
-  ...
+  gewicht_g            INT                    COMMENT 'Gewicht in Gramm',
+  preis_chf            DECIMAL(8,2)  NOT NULL COMMENT 'Bezahlter Preis in CHF',
+  aufgabe_datum        DATE          NOT NULL COMMENT 'Datum der Aufgabe',
+  soll_zustell_datum   DATE          NOT NULL COMMENT 'Gemäss Produktlaufzeit versprochenes Zustelldatum',
+  zustell_datum        DATE                   COMMENT 'Effektives Zustelldatum aus dem Tracking (nur Pakete; NULL, wenn nicht zugestellt)',
+  status               STRING                 COMMENT 'Tracking-Status (nur Pakete): UNTERWEGS, ZUGESTELLT, RETOURNIERT, VERLOREN',
   CONSTRAINT pk_sendung PRIMARY KEY (auftrag_id, position_nr),
   CONSTRAINT fk_sendung_auftrag FOREIGN KEY (auftrag_id) REFERENCES post_oltp.auftrag (auftrag_id),
-  ...
-);
+  CONSTRAINT fk_sendung_produkt FOREIGN KEY (produkt_id) REFERENCES post_oltp.produkt (produkt_id),
+  CONSTRAINT fk_sendung_empfaenger FOREIGN KEY (empfaenger_id) REFERENCES post_oltp.empfaenger (empfaenger_id)
+) COMMENT 'Einzelne Brief- oder Paketsendungen eines Auftrags';
+
+ALTER TABLE post_oltp.sendung ADD CONSTRAINT chk_sendung_status
+  CHECK (status IS NULL OR status IN ('UNTERWEGS', 'ZUGESTELLT', 'RETOURNIERT', 'VERLOREN'));
+ALTER TABLE post_oltp.sendung ADD CONSTRAINT chk_sendung_preis CHECK (preis_chf >= 0);
 ```
 
 > **TODO:** Screenshot Catalog Explorer mit Schema `post_oltp` und den 7 Tabellen einfügen.
