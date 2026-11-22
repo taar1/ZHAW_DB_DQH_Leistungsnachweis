@@ -504,7 +504,7 @@ Im betrachteten Zeitraum wurden insgesamt 12'134 Sendungen verkauft, die einen U
 
 ![Dashboard – F1 Brief vs. Paket](bilder/dashboard_f1.png)
 
-Pakete machen rund 60 % der Sendungen aus, erzielen aber über 90 % des Umsatzes (Ø knapp 20 CHF pro Paket gegenüber rund 2 CHF pro Brief). Beide Sendungsarten haben Spitzen im November (Black Friday) und Dezember (Weihnachten), bei den Paketen deutlich stärker. Der Einbruch am rechten Rand ist kein echter Rückgang: Der November 2026 ist nur unvollständig in den Daten enthalten.
+Pakete machen rund 60 % der Sendungen aus, erzielen aber über 90 % des Umsatzes (Ø knapp 20 CHF pro Paket gegenüber rund 2 CHF pro Brief). Beide Sendungsarten nehmen im Herbst zu und erreichen im Dezember (Weihnachten) ihren Höchststand, bei den Paketen deutlich stärker. Der Einbruch am rechten Rand ist kein echter Rückgang: Der November 2026 ist nur unvollständig in den Daten enthalten.
 
 ### 9.3 F2 – Verkaufskanäle
 
