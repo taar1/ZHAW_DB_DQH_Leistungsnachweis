@@ -32,6 +32,21 @@ let md = readFileSync(mdPath, "utf8");
 // Arbeitshinweise fürs Team (Blockquotes mit TODO / Hinweis) nicht ins PDF übernehmen.
 md = md.replace(/^> \*\*(TODO|Hinweis zur Arbeit)[^\n]*\n(>[^\n]*\n)*/gm, "");
 
+// Überschriften erhalten IDs im GitHub-Stil (z.B. "1. Ausgangslage" -> "1-ausgangslage"),
+// damit die Links im Inhaltsverzeichnis im PDF funktionieren.
+const slug = (text) =>
+  text.toLowerCase().trim()
+    .replace(/<[^>]+>/g, "")
+    .replace(/[^\p{L}\p{N}\s-]/gu, "")
+    .replace(/\s/g, "-");
+marked.use({
+  renderer: {
+    heading({ tokens, depth, text }) {
+      return `<h${depth} id="${slug(text)}">${this.parser.parseInline(tokens)}</h${depth}>\n`;
+    },
+  },
+});
+
 const body = marked.parse(md, { gfm: true });
 const css = readFileSync(join(here, "bericht.css"), "utf8");
 const html = `<!doctype html>

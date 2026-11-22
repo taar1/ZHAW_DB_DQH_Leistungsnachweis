@@ -7,30 +7,18 @@
 | Modul | Datenbanken & Datawarehouse (DB & DWH), ZHAW School of Engineering |
 | Team | Dominik Erbsland, Joel Liechti |
 | Abgabe | 30.11.2026 |
-| Repository | <https://github.com/taar1/ZHAW_DB_DQH_Leistungsnachweis> |
 | Werkzeuge | Databricks Free Edition (Serverless, Unity Catalog), Python, Mermaid, Databricks AI/BI Dashboard |
-
-> **Hinweis zur Arbeit am Bericht:** Stellen mit **TODO** müssen wir noch ergänzen. Die Diagramme liegen als
-> Mermaid-Quellen in `docs/diagramme/` und als Bilder in `bericht/bilder/`. Nach einer Änderung an einer
-> `.mmd`-Datei das Bild neu erzeugen.
 
 ### Schnellstart: Projekt in Databricks nachvollziehen
 
 So lassen sich die Ergebnisse beim Lesen direkt in Databricks anschauen:
 
-1. **Notebooks holen**, eine der beiden Varianten:
-   - Abgabedatei `post_leistungsnachweis.dbc` importieren: **Workspace** → eigener Ordner → **⋮ → Import**.
-   - Oder als Git-Ordner verknüpfen: **Workspace → Create → Git folder**, URL
-     `https://github.com/taar1/ZHAW_DB_DQH_Leistungsnachweis` (öffentlich, kein Token nötig).
-2. **Operative Datenbank aufsetzen:** Notebook `sql/00_setup_alles` öffnen, Compute *Serverless*, **Run all**.
-   Legt das Schema `post_oltp` an und füllt es (Kapitel 3–4).
-3. **Datawarehouse laden:** Notebook `databricks/00_etl_alles` → **Run all**. Legt `post_dwh_bronze`,
-   `post_dwh_silver` und `post_dwh_gold` an, inkl. der Sichten für das Dashboard (Kapitel 6–9).
-4. **Anschauen:** Im **Catalog** unter `workspace` die vier Schemas öffnen, im **SQL Editor** z.B.
-   `SELECT * FROM workspace.post_dwh_silver.dq_protokoll;`
+1. **Notebooks importieren:** Abgabedatei `post_leistungsnachweis.dbc` importieren: Workspace → eigener Ordner → ⋮ → Import.
+2. **Operative Datenbank aufsetzen:** Notebook `sql/00_setup_alles` öffnen, Compute *Serverless*, Run all. Legt das Schema `post_oltp` an und füllt es (Kapitel 3–4).
+3. **Datawarehouse laden:** Notebook `databricks/00_etl_alles` → Run all. Legt `post_dwh_bronze`, `post_dwh_silver` und `post_dwh_gold` an, inkl. der Sichten für das Dashboard (Kapitel 6–9).
+4. **Anschauen:** Im Catalog unter `workspace` die vier Schemas öffnen, im SQL Editor z.B. `SELECT * FROM workspace.post_dwh_silver.dq_protokoll;`
 
-Beide Notebooks laufen je 1–2 Minuten und können beliebig oft ausgeführt werden. Details und Kontrollwerte stehen in
-[`INSTALL.md`](../INSTALL.md).
+Beide Notebooks laufen je 1–2 Minuten und können beliebig oft ausgeführt werden. Details und Kontrollwerte stehen in [`INSTALL.md`](../INSTALL.md).
 
 ---
 
@@ -45,8 +33,7 @@ Beide Notebooks laufen je 1–2 Minuten und können beliebig oft ausgeführt wer
 7. [Datawarehouse in der Medaillon-Architektur](#7-datawarehouse-in-der-medaillon-architektur) (Aufgabe 7)
 8. [Datenqualitätsprüfungen im ETL-Prozess](#8-datenqualitätsprüfungen-im-etl-prozess) (Aufgabe 8)
 9. [Auswertungsdashboard](#9-auswertungsdashboard) (Aufgabe 9)
-10. [Fazit und Reflexion](#10-fazit-und-reflexion)
-11. [Anhang](#11-anhang)
+10. [Anhang](#10-anhang)
 
 ---
 
@@ -54,27 +41,20 @@ Beide Notebooks laufen je 1–2 Minuten und können beliebig oft ausgeführt wer
 
 ### 1.1 Beruflicher Kontext
 
-Wir arbeiten beide bei der **Schweizerischen Post / PostAuto**. Die Post verkauft Privat- und Geschäftskunden den
-Versand von Briefen und Paketen, im Inland und ins Ausland. Verkauft wird über physische Kanäle (Postfiliale, Filiale
-mit Partner, My Post 24-Automat, Abholung pick@home) und über digitale Kanäle (Online-Porto/WebStamp, Post-App,
-Geschäftskundenportal bzw. Versandschnittstelle). Pakete erhalten eine Sendungsnummer und können verfolgt werden,
-normale Briefe nicht.
+Wir arbeiten beide bei der Schweizerischen Post / PostAuto. Die Post verkauft Privat- und Geschäftskunden den Versand von Briefen und Paketen, im Inland und ins Ausland. Verkauft wird über physische Kanäle (Postfiliale, Filiale mit Partner, My Post 24-Automat, Abholung pick@home) und über digitale Kanäle (Online-Porto/WebStamp, Post-App, Geschäftskundenportal bzw. Versandschnittstelle). Pakete erhalten eine Sendungsnummer und können verfolgt werden, normale Briefe nicht.
 
-Wir bilden einen **vereinfachten Ausschnitt** dieses Geschäfts ab. Produkte und Preise lehnen sich an das Sortiment
-der Post an. Alle Kunden- und Empfängerdaten sind erfunden.
+Wir bilden einen vereinfachten Ausschnitt dieses Geschäfts ab. Produkte und Preise lehnen sich an das Sortiment der Post an. Alle Kunden- und Empfängerdaten sind erfunden.
 
-### 1.2 Geschäftsanwendung „Versand“
+### 1.2 Geschäftsanwendung «Versand»
 
 Die Anwendung deckt diese Abläufe ab:
 
 1. **Kunden:** Privat- und Geschäftskunden werden mit Name bzw. Firma, E-Mail und Adresse erfasst.
-2. **Verkauf:** Ein Kunde kauft über einen **Verkaufskanal** eine oder mehrere Sendungen. Ein Kauf ist ein Auftrag.
-3. **Sendungen:** Jede Position eines Auftrags ist eine **Sendung** mit genau einem **Produkt** (z.B. *Paket
-   Priority M*) und einem **Empfänger**. Pakete erhalten eine Trackingnummer.
+2. **Verkauf:** Ein Kunde kauft über einen Verkaufskanal eine oder mehrere Sendungen. Ein Kauf ist ein Auftrag.
+3. **Sendungen:** Jede Position eines Auftrags ist eine Sendung mit genau einem Produkt (z.B. *Paket Priority M*) und einem Empfänger. Pakete erhalten eine Trackingnummer.
 4. **Zustellung:** Zu jeder Sendung gibt es das Aufgabedatum und das versprochene Zustelldatum (Soll). Bei Paketen kommen aus dem Tracking das effektive Zustelldatum (Ist) und der Status dazu (unterwegs, zugestellt, retourniert, verloren). Bei Briefen bleiben diese Felder leer.
 
-**Nicht** abgebildet sind die einzelnen Scans der Sendungsverfolgung, Zusatzleistungen wie Einschreiben und die
-Standorte (Filialen, Sortierzentren). Für unsere Fragen (Kapitel 5) braucht es sie nicht.
+Nicht abgebildet sind die einzelnen Scans der Sendungsverfolgung, Zusatzleistungen wie Einschreiben und die Standorte (Filialen, Sortierzentren). Für unsere Fragen (Kapitel 5) braucht es sie nicht.
 
 Die geforderten Entitätstypen sind enthalten:
 
@@ -89,14 +69,14 @@ Die geforderten Entitätstypen sind enthalten:
 
 | Sendungsart | Zone | Services | Format- / Gewichtsklassen | Preis CHF |
 |---|---|---|---|---|
-| Brief | Inland (CH + FL) | A-Post (1 Werktag), B-Post (3 Werktage) | Standardbrief (B5, 100 g), Grossbrief (B4, 500 g), Maxibrief (B4, 1 kg) | 1.00 – 4.70 |
-| Paket | Inland (CH + FL) | Economy (2 WT), Priority (1 WT), Same Day | S (bis 2 kg), M (bis 10 kg), L (bis 30 kg) | 9.00 – 49.00 |
+| Brief | Inland | A-Post (1 Werktag), B-Post (3 Werktage) | Standardbrief (B5, 100 g), Grossbrief (B4, 500 g), Maxibrief (B4, 1 kg) | 1.00 – 4.70 |
+| Paket | Inland | Economy (2 WT), Priority (1 WT), Same Day | S (bis 2 kg), M (bis 10 kg), L (bis 30 kg) | 9.00 – 49.00 |
 | Brief | Europa | Priority, Economy | bis 20 g, bis 250 g, bis 2 kg | 2.20 – 18.00 |
 | Brief | Welt | Priority, Economy | bis 20 g, bis 250 g, bis 2 kg | 2.50 – 32.00 |
 | Paket | Europa | Priority, Economy | bis 2 kg, bis 10 kg, bis 30 kg | 31.00 – 115.00 |
 | Paket | Welt | Priority, Economy | bis 2 kg, bis 10 kg, bis 30 kg | 42.00 – 230.00 |
 
-Das ergibt **37 Produkte**. Liechtenstein gilt tariflich als Inland.
+Das ergibt 37 Produkte. Liechtenstein gilt tariflich als Inland.
 
 ---
 
@@ -104,13 +84,10 @@ Das ergibt **37 Produkte**. Liechtenstein gilt tariflich als Inland.
 
 ### 2.1 ER-Diagramm
 
-Quelle: [`docs/diagramme/erm_oltp.mmd`](../docs/diagramme/erm_oltp.mmd). Notation: Crow's Foot; `PK` = Primärschlüssel,
-`FK` = Fremdschlüssel, `UK` = eindeutiger fachlicher Schlüssel.
-
 ![ER-Modell der operativen Datenbank post_oltp](bilder/erm_oltp.png)
+Quelle: [`docs/diagramme/erm_oltp.mmd`](../docs/diagramme/erm_oltp.mmd). 
 
-**Legende der Linienenden (Crow's Foot):** Das Zeichen am Ende einer Linie gibt an, wie viele Datensätze auf dieser
-Seite zu einem Datensatz der anderen Seite gehören.
+Legende der Linienenden (Crow's Foot): Das Zeichen am Ende einer Linie gibt an, wie viele Datensätze auf dieser Seite zu einem Datensatz der anderen Seite gehören.
 
 | Zeichen am Linienende | Bedeutung | Beispiel |
 |---|---|---|
@@ -118,40 +95,23 @@ Seite zu einem Datensatz der anderen Seite gehören.
 | Kreis und Krähenfuss `○<` | keins, eins oder mehrere (0..n) | ein Kunde hat 0..n Aufträge |
 | Strich und Krähenfuss `\|<` | eins oder mehrere (1..n) | ein Auftrag hat mindestens eine Sendung |
 
-Die Beschriftung der Linie nennt die Beziehung (z.B. „erteilt“). Die ID-Beziehung zwischen Auftrag und Sendung ist
-mit „(ID-Beziehung)“ markiert, siehe 2.4.
+Die Beschriftung der Linie nennt die Beziehung (z.B. «erteilt»). Die ID-Beziehung zwischen Auftrag und Sendung ist mit «(ID-Beziehung)» markiert, siehe 2.4.
 
 ### 2.2 Entitätstypen
 
-| Entitätstyp | Art | Bedeutung | Schlüssel |
-|---|---|---|---|
-| `LAND` | Stammdaten | Land mit Tarifzone (CH, EUROPA, WELT) | `land_code` (ISO 3166) |
-| `KUNDE` | Stammdaten | Absender und Käufer, Privat- oder Geschäftskunde, inkl. Adresse | `kunde_id` |
-| `VERKAUFSKANAL` | Stammdaten | Kanal des Verkaufs (physisch/digital) | `kanal_id` |
-| `PRODUKT` | Stammdaten | Versandprodukt mit Zone, Service, Gewichtslimite, Soll-Laufzeit und Preis | `produkt_id` |
-| `EMPFAENGER` | Stammdaten | Empfänger einer Sendung, inkl. Adresse | `empfaenger_id` |
-| `AUFTRAG` | Bewegungsdaten | Kauf eines Kunden über einen Kanal | `auftrag_id` |
-| `SENDUNG` | Beziehungstabelle, abhängig von `AUFTRAG` | Position eines Auftrags = eine Sendung | (`auftrag_id`, `position_nr`) |
+| Entitätstyp | Datenart | Tabellentyp | Bedeutung | Schlüssel |
+|---|---|---|---|---|
+| `LAND` | Stammdaten | Entitätstabelle | Land mit Tarifzone (CH, EUROPA, WELT) | `land_code` (ISO 3166) |
+| `KUNDE` | Stammdaten | Entitätstabelle | Absender und Käufer, Privat- oder Geschäftskunde, inkl. Adresse | `kunde_id` |
+| `VERKAUFSKANAL` | Stammdaten | Entitätstabelle | Kanal des Verkaufs (physisch/digital) | `kanal_id` |
+| `PRODUKT` | Stammdaten | Entitätstabelle | Versandprodukt mit Zone, Service, Gewichtslimite, Soll-Laufzeit und Preis | `produkt_id` |
+| `EMPFAENGER` | Stammdaten | Entitätstabelle | Empfänger einer Sendung, inkl. Adresse | `empfaenger_id` |
+| `AUFTRAG` | Bewegungsdaten | Entitätstabelle | Kauf eines Kunden über einen Kanal | `auftrag_id` |
+| `SENDUNG` | Bewegungsdaten | Beziehungstabelle (abhängig von `AUFTRAG`) | Position eines Auftrags = eine Sendung | (`auftrag_id`, `position_nr`) |
 
-Alle Tabellen ausser `SENDUNG` und `AUFTRAG` sind normale Entitätstabellen mit eigenem Schlüssel.
-**Stammdaten** (Kunden, Produkte, Länder) ändern sich selten und existieren unabhängig von anderen Tabellen.
-**Bewegungsdaten** entstehen laufend im operativen Geschäft, zum Beispiel mit jedem Auftrag.
+Stammdaten ändern sich selten und existieren unabhängig von anderen Tabellen, Bewegungsdaten entstehen laufend mit jedem Auftrag. `SENDUNG` ist die einzige Beziehungstabelle: Sie löst die m:n-Beziehung zwischen `AUFTRAG` und `PRODUKT` auf und hängt über ihren Schlüssel vom Auftrag ab (ID-Beziehung, siehe 2.4).
 
-`SENDUNG` ist die einzige **Beziehungstabelle**: Sie verbindet einen Auftrag mit einem Produkt und einem Empfänger.
-Damit löst sie die m:n-Beziehung zwischen `AUFTRAG` und `PRODUKT` auf, denn ein Auftrag kann mehrere Produkte
-enthalten und ein Produkt kommt in vielen Aufträgen vor. Zusätzlich hat sie eigene Attribute (Gewicht, Preis,
-Daten, Status). Ihr Schlüssel hängt vom Auftrag ab (ID-Beziehung, siehe 2.4): Ohne Auftrag gibt es keine Sendung.
-
-Die Adresse steht direkt in `KUNDE` bzw. `EMPFAENGER`. Eine eigene Adresstabelle wäre sauberer normalisiert,
-bringt für unsere Auswertungen aber nichts. Auch `KUNDE` und `EMPFAENGER` bleiben getrennt, weil sie verschiedene
-Rollen haben: Der Kunde kauft und bezahlt, der Empfänger ist nur die Zieladresse, oft im Ausland und ohne
-Beziehung zur Post
-
-Beim Empfänger sind `name`, `ort` und `land_code` Pflichtfelder (`NOT NULL`), denn ohne sie ist keine Zustellung
-möglich und das Land bestimmt Zone und Preis. `strasse` und `plz` sind dagegen optional: Einige Länder kennen keine
-Postleitzahl, in unseren Daten betrifft das die 14 Empfänger in den Vereinigten Arabischen Emiraten (`plz` = NULL).
-Ebenso hätten Postfach- oder postlagernde Adressen keine Strasse. Das ERD zeigt Pflichtfelder nicht an; sie sind im
-Schema (`sql/01_create_schema.sql`) definiert.
+Die Adresse steht direkt in `KUNDE` bzw. `EMPFAENGER`. Eine eigene Adresstabelle wäre sauberer normalisiert, bringt für unsere Auswertungen aber nichts. Die Pflichtfelder (`NOT NULL`) zeigt das ERD nicht an; sie sind in Kapitel 3 beschrieben.
 
 ### 2.3 Beziehungen und Kardinalitäten
 
@@ -159,19 +119,16 @@ Schema (`sql/01_create_schema.sql`) definiert.
 |---|---|---|
 | Kunde – Auftrag | 1 : 0..n | Ein Kunde hat beliebig viele Aufträge, ein Auftrag gehört zu genau einem Kunden. |
 | Verkaufskanal – Auftrag | 1 : 0..n | Jeder Auftrag läuft über genau einen Kanal. |
-| Auftrag – Sendung | 1 : 1..n | **ID-Beziehung**, siehe 2.4. |
-| Produkt – Sendung | 1 : 0..n | Jede Sendung ist genau ein Produkt. Daraus ergibt sich die **Kunde–Produkt-Beziehung** (m:n, aufgelöst über Auftrag und Sendung). |
+| Produkt – Sendung | 1 : 0..n | Jede Sendung ist genau ein Produkt. Daraus ergibt sich die Kunde–Produkt-Beziehung (m:n, aufgelöst über Auftrag und Sendung). |
 | Empfänger – Sendung | 1 : 0..n | Ein Empfänger kann mehrere Sendungen erhalten. |
 | Land – Kunde / Empfänger | 1 : 0..n | Die Zone des Empfängerlandes bestimmt, welche Produkte möglich sind. |
 
 ### 2.4 ID-Beziehung Auftrag → Sendung
 
-Bei einer **ID-Beziehung** lässt sich eine Entität nur zusammen mit ihrer übergeordneten Entität eindeutig
-identifizieren. Ihr Primärschlüssel enthält deshalb den Schlüssel der übergeordneten Entität.
+Bei einer ID-Beziehung lässt sich eine Entität nur zusammen mit ihrer übergeordneten Entität eindeutig identifizieren. Ihr Primärschlüssel enthält deshalb den Schlüssel der übergeordneten Entität.
 
 - Eine Sendung gibt es nur innerhalb eines Auftrags: ohne Kauf keine Sendung.
-- Sie wird über ihre **Positionsnummer im Auftrag** identifiziert: `PK(SENDUNG) = (auftrag_id, position_nr)`.
-  `auftrag_id` ist dabei Teil des Primärschlüssels und gleichzeitig Fremdschlüssel auf `AUFTRAG`.
+- Sie wird über ihre Positionsnummer im Auftrag identifiziert: `PK(SENDUNG) = (auftrag_id, position_nr)`. `auftrag_id` ist dabei Teil des Primärschlüssels und gleichzeitig Fremdschlüssel auf `AUFTRAG`.
 - Kardinalität 1 : 1..n, denn jeder Auftrag hat mindestens eine Sendung.
 
 Beispiel aus den Daten: Auftrag 25 (Privatkunde, Postfiliale) mit fünf Sendungen:
@@ -184,31 +141,24 @@ Beispiel aus den Daten: Auftrag 25 (Privatkunde, Postfiliale) mit fünf Sendunge
 | 25 | 4 | 99.60.100039.10000666 | Paket Priority M | CH |
 | 25 | 5 | CP100001335CH | Paket International Welt Priority (bis 10 kg) | US |
 
-`position_nr = 1` allein ist nicht eindeutig, denn jeder Auftrag hat eine Position 1. Erst zusammen mit `auftrag_id`
-ist der Schlüssel eindeutig.
+`position_nr = 1` allein ist nicht eindeutig, denn jeder Auftrag hat eine Position 1. Erst zusammen mit `auftrag_id` ist der Schlüssel eindeutig.
 
 ---
 
 ## 3. Umsetzung der operativen Datenbank in Databricks
 
-Die operative Datenbank ist im Unity Catalog das Schema **`workspace.post_oltp`**
-(DDL: [`sql/01_create_schema.sql`](../sql/01_create_schema.sql)). Alle 7 Tabellen sind **Delta-Tabellen**.
+Die operative Datenbank ist im Unity Catalog das Schema `workspace.post_oltp` (DDL: [`sql/01_create_schema.sql`](../sql/01_create_schema.sql)). Alle 7 Tabellen sind Delta-Tabellen.
 
 Wichtige Entscheide über alle Tabellen:
 
-- **Datentypen:** Geldbeträge als `DECIMAL` (keine Rundungsfehler wie bei `DOUBLE`), Daten als `DATE`,
-  Postleitzahlen als `STRING` (ausländische PLZ enthalten Buchstaben, z.B. „SW1A 1AA“).
-- **Schlüssel:** `PRIMARY KEY` und `FOREIGN KEY` sind definiert. Databricks prüft sie aber nicht, sie dienen nur der
-  Dokumentation und erscheinen im Catalog Explorer. Die referentielle Integrität prüfen wir deshalb selbst im ETL (Kapitel 8).
+- **Datentypen:** Geldbeträge als `DECIMAL` (keine Rundungsfehler wie bei `DOUBLE`), Daten als `DATE`, Postleitzahlen als `STRING` (ausländische PLZ enthalten Buchstaben, z.B. «SW1A 1AA»).
+- **Schlüssel:** `PRIMARY KEY` und `FOREIGN KEY` sind definiert. Databricks prüft sie aber nicht, sie dienen nur der Dokumentation und erscheinen im Catalog Explorer. Die referentielle Integrität prüfen wir deshalb selbst im ETL (Kapitel 8).
 
-Auszug aus der DDL:
+Die folgenden Abschnitte beschreiben jede Tabelle mit einem Auszug aus der DDL.
 
-### Land
+### 3.1 Land
 
-Die Tabelle `land` enthält reine Stammdaten. Als Primärschlüssel dient der ISO-Code (z. B. `CH`, `DE`, `US`) und keine
-künstliche ID, da der Code stabil und in Abfragen direkt lesbar ist. Jedes Land ist genau einer Tarifzone zugeordnet
-(`CH`, `EUROPA` oder `WELT`), die den Preis einer Sendung bestimmt. Liechtenstein gehört zur Zone `CH`, weil die Post
-es tariflich wie das Inland behandelt. Ein `CHECK`-Constraint stellt sicher, dass nur diese drei Zonen vorkommen.
+Die Tabelle `land` enthält reine Stammdaten. Als Primärschlüssel dient der ISO-Code (z. B. `CH`, `DE`, `US`) und keine künstliche ID, da der Code stabil und in Abfragen direkt lesbar ist. Jedes Land ist genau einer Tarifzone zugeordnet (`CH`, `EUROPA` oder `WELT`), die den Preis einer Sendung bestimmt. Liechtenstein gehört zur Zone `CH`, weil die Post es tariflich wie das Inland behandelt. Ein `CHECK`-Constraint stellt sicher, dass nur diese drei Zonen vorkommen.
 
 ```sql
 CREATE TABLE post_oltp.land (
@@ -219,18 +169,11 @@ CREATE TABLE post_oltp.land (
 ) COMMENT 'Länder und deren Tarifzone';
 
 ALTER TABLE post_oltp.land ADD CONSTRAINT chk_land_zone CHECK (zone IN ('CH', 'EUROPA', 'WELT'));
-);
 ```
-### Kunde
 
-Die Tabelle `kunde` enthält alle Auftraggeber der Post, sowohl Privat- als auch Geschäftskunden. Beide Typen teilen sich
-eine Tabelle und werden über `kundentyp` unterschieden, da sich die Daten kaum unterscheiden. Bei Geschäftskunden steht
-der Firmenname in `firmenname`, und `vorname` und `nachname` bezeichnen die Kontaktperson.
-`strasse` und `plz` sind optional. Einige Länder kennen keine Postleitzahl, etwa die Vereinigten Arabischen Emirate,
-die auch in den Beispieldaten vorkommen. Zudem haben Postfach- oder postlagernde Adressen keine Strassenbezeichnung.
-Die Postleitzahl ist ein Textfeld, weil ausländische Postleitzahlen Buchstaben enthalten können.
-Über `land_code` ist jeder Kunde einem Land zugeordnet. Ein `CHECK`-Constraint begrenzt `kundentyp` auf die beiden
-zulässigen Werte.
+### 3.2 Kunde
+
+Die Tabelle `kunde` enthält alle Auftraggeber der Post, sowohl Privat- als auch Geschäftskunden. Beide Typen teilen sich eine Tabelle und werden über `kundentyp` unterschieden, da sich die Daten kaum unterscheiden. Bei Geschäftskunden steht der Firmenname in `firmenname`, und `vorname` und `nachname` bezeichnen die Kontaktperson. `strasse` und `plz` sind optional, weil Postfach-Adressen keine Strasse haben und einige Länder keine Postleitzahl kennen (siehe Empfänger). In den Beispieldaten stammen alle Kunden aus der Schweiz und Liechtenstein und haben eine vollständige Adresse. Die Postleitzahl ist ein Textfeld, weil ausländische Postleitzahlen Buchstaben enthalten können. Über `land_code` ist jeder Kunde einem Land zugeordnet. Ein `CHECK`-Constraint begrenzt `kundentyp` auf die beiden zulässigen Werte.
 
 ```sql
 CREATE TABLE post_oltp.kunde (
@@ -252,10 +195,9 @@ CREATE TABLE post_oltp.kunde (
 ALTER TABLE post_oltp.kunde ADD CONSTRAINT chk_kunde_typ CHECK (kundentyp IN ('PRIVAT', 'GESCHAEFT'));
 ```
 
-### Verkaufskanal
+### 3.3 Verkaufskanal
 
-Die Stammdatentabelle `verkaufskanal` enthält die Kanäle, über die Postprodukte verkauft werden, etwa die Postfiliale oder die Post-App.
-Mit `kanal_typ` werden sie in physische und digitale Kanäle gruppiert, abgesichert durch einen `CHECK`-Constraint.
+Die Stammdatentabelle `verkaufskanal` enthält die Kanäle, über die Postprodukte verkauft werden, etwa die Postfiliale oder die Post-App. Mit `kanal_typ` werden sie in physische und digitale Kanäle gruppiert, abgesichert durch einen `CHECK`-Constraint.
 
 ```sql
 CREATE TABLE post_oltp.verkaufskanal (
@@ -267,7 +209,7 @@ CREATE TABLE post_oltp.verkaufskanal (
 
 ALTER TABLE post_oltp.verkaufskanal ADD CONSTRAINT chk_kanal_typ CHECK (kanal_typ IN ('PHYSISCH', 'DIGITAL'));
 ```
-### Produkt
+### 3.4 Produkt
 
 Die Stammdatentabelle `produkt` enthält das Sortiment der Brief- und Paketprodukte mit Sendungsart, Tarifzone, Service, Maximalgewicht, Laufzeit in Werktagen und Listenpreis in CHF. Alle Felder sind Pflicht. `CHECK`-Constraints begrenzen Sendungsart und Zone auf die zulässigen Werte und verhindern negative Preise.
 
@@ -286,12 +228,12 @@ CREATE TABLE post_oltp.produkt (
 
 ALTER TABLE post_oltp.produkt ADD CONSTRAINT chk_produkt_art CHECK (sendungsart IN ('BRIEF', 'PAKET'));
 ALTER TABLE post_oltp.produkt ADD CONSTRAINT chk_produkt_zone CHECK (zone IN ('CH', 'EUROPA', 'WELT'));
-ALTER TABLE post_oltp.produkt ADD CONSTRAINT chk_produkt_preis CHECK (preis_chf >= 0)
+ALTER TABLE post_oltp.produkt ADD CONSTRAINT chk_produkt_preis CHECK (preis_chf >= 0);
 ```
 
-### Empfänger
+### 3.5 Empfänger
 
-Die Tabelle `empfaenger` enthält die Empfänger von Sendungen im In- und Ausland. Sie ist von `kunde` getrennt, weil beide verschiedene Rollen haben: Der Kunde kauft und bezahlt, der Empfänger ist nur die Zieladresse, oft im Ausland und ohne Beziehung zur Post. `name`, `ort` und `land_code` sind Pflichtfelder, denn ohne sie ist keine Zustellung möglich, und das Land bestimmt Zone und Preis. `strasse` und `plz` sind wie bei `kunde` optional: Einige Länder kennen keine Postleitzahl und Postfach- oder postlagernde Adressen haben keine Strasse.
+Die Tabelle `empfaenger` enthält die Empfänger von Sendungen im In- und Ausland. Sie ist von `kunde` getrennt, weil beide verschiedene Rollen haben: Der Kunde kauft und bezahlt, der Empfänger ist nur die Zieladresse, oft im Ausland und ohne Beziehung zur Post. `name`, `ort` und `land_code` sind Pflichtfelder, denn ohne sie ist keine Zustellung möglich, und das Land bestimmt Zone und Preis. `strasse` und `plz` sind wie bei `kunde` optional: Einige Länder kennen keine Postleitzahl (in unseren Daten die 14 Empfänger in den Vereinigten Arabischen Emiraten), und Postfach- oder postlagernde Adressen haben keine Strasse.
 
 ```sql
 CREATE TABLE post_oltp.empfaenger (
@@ -306,9 +248,9 @@ CREATE TABLE post_oltp.empfaenger (
 ) COMMENT 'Empfänger von Sendungen (Inland und Ausland)';
 ```
 
-### Auftrag
+### 3.6 Auftrag
 
-Die Tabelle `auftrag` enthält die Käufe der Kunden und gehört zu den Bewegungsdaten. Jeder Auftrag gehört zu genau einem Kunden und wurde über genau einen Verkaufskanal abgeschlossen. Beides ist über Fremdschlüssel abgesichert. Der Auftrag hält das Kaufdatum fest und enthält die einzelnen Sendungen, die in der Tabelle `sendung` nummeriert werden. Der Gesamtbetrag `betrag_total_chf` entspricht der Summe der Sendungspreise. Er ist damit abgeleitet, wird aber direkt gespeichert, damit Auswertungen nach Umsatz ohne Aggregation über `sendung` auskommen.
+Die Tabelle `auftrag` enthält die Käufe der Kunden und gehört zu den Bewegungsdaten. Jeder Auftrag gehört zu genau einem Kunden und wurde über genau einen Verkaufskanal abgeschlossen. Beides ist über Fremdschlüssel abgesichert. Der Auftrag hält das Kaufdatum fest und enthält die einzelnen Sendungen, die in der Tabelle `sendung` nummeriert werden. Der Gesamtbetrag `betrag_total_chf` entspricht der Summe der Sendungspreise. Er ist damit abgeleitet und wird trotzdem gespeichert. Das DWH prüft ihn gegen die Summe der Sendungen (Kapitel 8).
 
 ```sql
 CREATE TABLE post_oltp.auftrag (
@@ -323,9 +265,9 @@ CREATE TABLE post_oltp.auftrag (
 ) COMMENT 'Aufträge (Käufe) der Kunden';
 ```
 
-### Sendung
+### 3.7 Sendung
 
-Die Tabelle `sendung` enthält die einzelnen Brief- und Paketsendungen eines Auftrags und bildet den Kern der Bewegungsdaten. Eine Sendung existiert nur innerhalb eines Auftrags und wird darin durchnummeriert. Deshalb besteht der Primärschlüssel aus `auftrag_id` und `position_nr`. Zusätzlich verweist jede Sendung auf das gewählte Produkt und den Empfänger. Der Preis wird als bezahlter Betrag in `preis_chf` direkt gespeichert. Mit `soll_zustell_datum` (versprochen, gemäss Produktlaufzeit) und `zustell_datum` (effektiv) lässt sich die Pünktlichkeit der Zustellung auswerten. Die Tracking-Felder `tracking_nr`, `zustell_datum` und `status` sind optional, weil nur Pakete verfolgbar sind, hingegen bei Briefen bleiben sie leer. `CHECK`-Constraints begrenzen den Status auf die zulässigen Werte und verhindern negative Preise.
+Die Tabelle `sendung` enthält die einzelnen Brief- und Paketsendungen eines Auftrags und bildet den Kern der Bewegungsdaten. Eine Sendung existiert nur innerhalb eines Auftrags und wird darin durchnummeriert. Deshalb besteht der Primärschlüssel aus `auftrag_id` und `position_nr`. Zusätzlich verweist jede Sendung auf das gewählte Produkt und den Empfänger. Der Preis wird als bezahlter Betrag in `preis_chf` direkt gespeichert. Mit `soll_zustell_datum` (versprochen, gemäss Produktlaufzeit) und `zustell_datum` (effektiv) lässt sich die Pünktlichkeit der Zustellung auswerten. Die Tracking-Felder `tracking_nr`, `zustell_datum` und `status` sind optional, weil nur Pakete verfolgbar sind, bei Briefen bleiben sie leer. `CHECK`-Constraints begrenzen den Status auf die zulässigen Werte und verhindern negative Preise.
 
 ```sql
 CREATE TABLE post_oltp.sendung (
@@ -351,16 +293,13 @@ ALTER TABLE post_oltp.sendung ADD CONSTRAINT chk_sendung_status
 ALTER TABLE post_oltp.sendung ADD CONSTRAINT chk_sendung_preis CHECK (preis_chf >= 0);
 ```
 
-> **TODO:** Screenshot Catalog Explorer mit Schema `post_oltp` und den 7 Tabellen einfügen.
-
 ---
 
 ## 4. Beispieldaten
 
 ### 4.1 Vorgehen
 
-Die Beispieldaten erzeugt ein Python-Skript ([`scripts/generate_data.py`](../scripts/generate_data.py)). Es schreibt
-SQL-INSERT-Skripte, die `sql/00_setup_alles` in `post_oltp` lädt:
+Die Beispieldaten erzeugt ein Python-Skript ([`scripts/generate_data.py`](../scripts/generate_data.py)). Es schreibt SQL-INSERT-Skripte, die `sql/00_setup_alles` in `post_oltp` lädt:
 
 | Datei | Tabellen |
 |---|---|
@@ -370,19 +309,15 @@ SQL-INSERT-Skripte, die `sql/00_setup_alles` in `post_oltp` lädt:
 
 Die Skripte ersetzen den laufenden Betrieb, in der Praxis würden die Daten im Postsystem selbst entstehen. 
 
-Der Generator verwendet einen **festen Zufalls-Seed**, die Daten sind also bei jedem Lauf gleich. Damit die
-Auswertungen realistisch aussehen, bildet er typische Muster nach:
+Der Generator verwendet einen festen Zufalls-Seed, die Daten sind also bei jedem Lauf gleich. Damit die Auswertungen realistisch aussehen, bildet er typische Muster nach:
 
-- Kunden haben einen **bevorzugten Kanal**. Geschäftskunden bestellen vor allem digital, Privatkunden häufiger in der Filiale.
-- **Saisonalität:** Spitzen im November (Black Friday) und Dezember, wenig Aufträge an Sonn- und Feiertagen.
-  Briefe machen über den ganzen Zeitraum rund 40 % der Sendungen aus.
-- Das **Produkt** passt zur Zone des Empfängers, das **Gewicht** zur Gewichtsklasse.
-- Das **Soll-Zustelldatum** ergibt sich aus der Laufzeit des Produkts. Rund 6–7 % der Pakete sind verspätet, vor
-  Weihnachten mehr. Dazu kommen wenige Retouren und verlorene Pakete.
-- **Trackingnummern** gibt es nur für Pakete, im Aufbau der Post, z.B. `99.60.123456.12345678` (Inland) oder
-  `CP100001335CH` (international).
+- Kunden haben einen bevorzugten Kanal. Geschäftskunden bestellen vor allem digital, Privatkunden häufiger in der Filiale.
+- **Saisonalität:** Spitzen im November (Black Friday) und Dezember, wenig Aufträge an Sonn- und Feiertagen. Briefe machen über den ganzen Zeitraum rund 40 % der Sendungen aus.
+- Das Produkt passt zur Zone des Empfängers, das Gewicht zur Gewichtsklasse.
+- Das Soll-Zustelldatum ergibt sich aus der Laufzeit des Produkts. Rund 6–7 % der Pakete sind verspätet, vor Weihnachten mehr. Dazu kommen wenige Retouren und verlorene Pakete.
+- **Trackingnummern** gibt es nur für Pakete, im Aufbau der Post, z.B. `99.60.123456.12345678` (Inland) oder `CP100001335CH` (international).
 
-Zeitraum: **01.01.2024 – 09.11.2026**, Datenstand 10.11.2026.
+Zeitraum: 01.01.2024 – 09.11.2026, Datenstand 10.11.2026.
 
 ### 4.2 Datenmengen
 
@@ -398,13 +333,12 @@ Zeitraum: **01.01.2024 – 09.11.2026**, Datenstand 10.11.2026.
 
 ### 4.3 Absichtlich eingebaute Datenfehler
 
-Echte Systeme enthalten immer fehlerhafte Daten. Damit die Prüfungen im DWH (Kapitel 8) etwas finden, haben wir
-folgende Fehler eingebaut:
+Echte Systeme enthalten immer fehlerhafte Daten. Damit die Prüfungen im DWH (Kapitel 8) etwas finden, haben wir folgende Fehler eingebaut:
 
 | Nr. | Problem | Tabelle.Spalte | Anzahl | Typische Ursache in der Praxis |
 |---|---|---|---:|---|
 | 1 | E-Mail fehlt oder ungültig | `kunde.email` | 20 | Freitexterfassung am Schalter |
-| 2 | Ungültige Schweizer PLZ (nicht 4-stellig) | `kunde.plz` | 6 | Tippfehler, „CH-8001“ |
+| 2 | Ungültige Schweizer PLZ (nicht 4-stellig) | `kunde.plz` | 6 | Tippfehler, «CH-8001» |
 | 3 | Ort unterschiedlich geschrieben (Zuerich, ZÜRICH, Genf) | `kunde.ort` | 10 | Mehrsprachigkeit, keine Vorgaben |
 | 4 | Kunde doppelt erfasst | `kunde` | 8 | Neu registriert statt eingeloggt |
 | 5 | Gewicht grösser als Produktlimite | `sendung.gewicht_g` | 109 | Falsches Produkt gewählt, Waage |
@@ -443,9 +377,9 @@ Alle Kennzahlen lassen sich nach Zeit (Jahr, Quartal, Monat), Produkt, Kanal, Ku
 
 Diese drei Fragen werden im Dashboard (Kapitel 9) beantwortet:
 
-- **F1 – Brief vs. Paket:** Wie entwickeln sich Menge und Umsatz von Briefen und Paketen von Monat zu Monat? Welche Saisonalität gibt es?
-- **F2 – Verkaufskanäle:** Wie viel Umsatz bringt welcher Kanal und Kundentyp, und wächst der digitale Anteil?
-- **F3 – Pünktlichkeit:** Wie pünktlich sind die Pakete pro Zone und Service (Priority, Economy, Same Day)? Sinkt die Pünktlichkeit vor Weihnachten? Für Briefe lässt sich das mit unseren Daten nicht beantworten, weil sie kein Tracking haben. 
+- **Frage 1 – Brief vs. Paket:** Wie entwickeln sich Menge und Umsatz von Briefen und Paketen von Monat zu Monat? Welche Saisonalität gibt es?
+- **Frage 2 – Verkaufskanäle:** Wie viel Umsatz bringt welcher Kanal und Kundentyp, und wächst der digitale Anteil?
+- **Frage 3 – Pünktlichkeit:** Wie pünktlich sind die Pakete pro Zone und Service (Priority, Economy, Same Day)? Sinkt die Pünktlichkeit vor Weihnachten? 
 
 ---
 
@@ -453,24 +387,18 @@ Diese drei Fragen werden im Dashboard (Kapitel 9) beantwortet:
 
 ### 6.1 Geschäftsobjekt
 
-Wir wählen die **Sendung** als Geschäftsobjekt. Damit lassen sich alle Fragen aus Kapitel 5 beantworten: Menge,
-Umsatz und bei Paketen die Pünktlichkeit.
+Wir wählen die Sendung als Geschäftsobjekt. Damit lassen sich alle Fragen aus Kapitel 5 beantworten: Menge, Umsatz und bei Paketen die Pünktlichkeit.
 
-**Granularität:** Eine Zeile der Faktentabelle ist **eine Sendung**. Feiner geht es nicht, und daraus lässt sich
-jede gröbere Sicht (Monat, Kanal, Zone …) zusammenzählen.
+Granularität: Eine Zeile der Faktentabelle ist eine Sendung. Feiner geht es nicht, und daraus lässt sich jede gröbere Sicht (Monat, Kanal, Zone …) zusammenzählen.
 
 ### 6.2 Sternschema
 
+![Sternschema des Geschäftsobjekts Sendung](bilder/sternschema_sendung.png)
 Quelle: [`docs/diagramme/sternschema_sendung.mmd`](../docs/diagramme/sternschema_sendung.mmd)
 
-![Sternschema des Geschäftsobjekts Sendung](bilder/sternschema_sendung.png)
+Die Linienenden sind gleich zu lesen wie im ER-Diagramm (Legende in 2.1): Jede Dimensionszeile gehört zu 0..n Fakten, jede Faktenzeile zu genau einer Zeile pro Dimension.
 
-Die Linienenden sind gleich zu lesen wie im ER-Diagramm (Legende in 2.1): Jede Dimensionszeile gehört zu 0..n
-Fakten, jede Faktenzeile zu genau einer Zeile pro Dimension.
-
-Die **Faktentabelle** `fact_sendung` enthält die Kennzahlen und die Schlüssel auf die Dimensionen. Die
-**Dimensionen** beschreiben den Zusammenhang einer Sendung: wann (Datum), wer (Kunde), was (Produkt), wie
-gekauft (Kanal) und wohin (Zielland).
+Die Faktentabelle `fact_sendung` enthält die Kennzahlen und die Schlüssel auf die Dimensionen. Die Dimensionen beschreiben den Zusammenhang einer Sendung: wann (Datum), wer (Kunde), was (Produkt), wie gekauft (Kanal) und wohin (Zielland).
 
 ### 6.3 Dimensionen und Hierarchien
 
@@ -490,22 +418,20 @@ gekauft (Kanal) und wohin (Zielland).
 | `umsatz_chf` | ja | |
 | `gewicht_g` | ja | leer, wenn das Gewicht unplausibel ist (Kapitel 8) |
 | `laufzeit_werktage` | nein | nur der Durchschnitt ist sinnvoll |
-| `puenktlich_flag` | nein | 1 = pünktlich, 0 = verspätet, leer = nicht zugestellt oder Brief; der Durchschnitt ergibt die Pünktlichkeitsquote |
+| `puenktlich_flag` | nein | 1 = pünktlich, 0 = verspätet, leer = nicht zugestellt oder Brief. Der Durchschnitt ergibt die Pünktlichkeitsquote. |
 
 **Entscheide**
 
 - **Schlüssel:** Die Dimensionen übernehmen die IDs aus der operativen DB (`kunde_id`, `produkt_id` …), das Datum hat den Schlüssel `YYYYMMDD`. Da wir keine Historie führen (SCD Typ 1: Änderungen überschreiben den alten Wert), braucht es keine zusätzlichen Schlüssel.
-- `tracking_nr` und `status` stehen direkt in der Faktentabelle (*degenerierte Dimensionen*). Für zwei Spalten lohnt
-  sich keine eigene Dimension. Bei Briefen sind beide leer.
+- `tracking_nr` und `status` stehen direkt in der Faktentabelle (*degenerierte Dimensionen*). Für zwei Spalten lohnt sich keine eigene Dimension. Bei Briefen sind beide leer.
 - **Unbekannte Werte:** Sendungen ohne gültigen Empfänger (Datenfehler, siehe Kapitel 8) bekommen das Zielland `XX – Unbekannt`, damit ihr Umsatz nicht verloren geht.
 
 ---
 
 ## 7. Datawarehouse in der Medaillon-Architektur
 
-Quelle: [`docs/diagramme/medaillon_architektur.mmd`](../docs/diagramme/medaillon_architektur.mmd)
-
 ![Medaillon-Architektur des Datawarehouse](bilder/medaillon_architektur.png)
+Quelle: [`docs/diagramme/medaillon_architektur.mmd`](../docs/diagramme/medaillon_architektur.mmd)
 
 | Schicht | Schema | Inhalt | ETL-Notebook |
 |---|---|---|---|
@@ -513,11 +439,9 @@ Quelle: [`docs/diagramme/medaillon_architektur.mmd`](../docs/diagramme/medaillon
 | Silver | `post_dwh_silver` | Bereinigte Daten, jede Sendung mit Markierungen aus den Prüfungen, dazu das Prüfprotokoll `dq_protokoll` | `20_silver_bereinigen` |
 | Gold | `post_dwh_gold` | Sternschema (Kapitel 6) für das Dashboard | `30_gold_sternschema` |
 
-Die Schichten entsprechen der DWH-Referenzarchitektur aus dem Unterricht (DWH-3, Folien 25–29): Bronze ist die
-Staging Area, Silver die Integrationsschicht und Gold die Analyseschicht mit dem Star-Schema.
+Die Schichten entsprechen der DWH-Referenzarchitektur aus dem Unterricht (DWH-3, Folien 25–29): Bronze ist die Staging Area, Silver die Integrationsschicht und Gold die Analyseschicht mit dem Sternschema.
 
-Bei jedem Lauf werden alle Schichten komplett neu geladen (*Full Load* mit `CREATE OR REPLACE TABLE … AS SELECT`).
-Bei unserer Datenmenge ist das am einfachsten. Im Betrieb würde man nur die Änderungen laden (inkrementell).
+Bei jedem Lauf werden alle Schichten komplett neu geladen (*Full Load* mit `CREATE OR REPLACE TABLE … AS SELECT`). Bei unserer Datenmenge ist das am einfachsten. Im Betrieb würde man nur die Änderungen laden (inkrementell).
 
 Die Notebooks liegen im Ordner [`databricks/`](../databricks), `00_etl_alles` führt sie der Reihe nach aus:
 
@@ -530,20 +454,18 @@ Die Notebooks liegen im Ordner [`databricks/`](../databricks), `00_etl_alles` f�
 
 ## 8. Datenqualitätsprüfungen im ETL-Prozess
 
-Die Prüfungen laufen beim Laden von Silver (Notebook `20_silver_bereinigen`). Verlangt sind mindestens zwei, es wurder vier umgesetzt:
+Die Prüfungen laufen beim Laden von Silver (Notebook `20_silver_bereinigen`). Verlangt sind mindestens zwei, es wurden vier umgesetzt:
 
 | Prüfung | Regel | Was passiert mit fehlerhaften Daten |
 |---|---|---|
-| **Empfänger vorhanden** | Jede `sendung.empfaenger_id` existiert in `empfaenger` | Sendung bleibt, Zielland = „Unbekannt“ |
+| **Empfänger vorhanden** | Jede `sendung.empfaenger_id` existiert in `empfaenger` | Sendung bleibt, Zielland = «Unbekannt» |
 | **Gewicht plausibel** | `gewicht_g > 0` und `≤ produkt.max_gewicht_g` | Gewicht wird leer gesetzt, Umsatz zählt weiter |
 | **Datum plausibel** | `zustell_datum ≥ aufgabe_datum` | Laufzeit und Pünktlichkeit bleiben leer, zählen nicht zur Quote |
 | **Auftragstotal stimmt** | `auftrag.betrag_total_chf = Summe sendung.preis_chf` | Abweichung wird protokolliert, im DWH gilt die Summe der Sendungen |
 
 Fehlerhafte Datensätze werden in Silver nicht gelöscht, sondern markiert, damit nachvollziehbar bleibt, was bereinigt wurde. Der ursprüngliche Wert bleibt in Bronze unverändert erhalten. Bei Gewicht, Ort und Auftragstotal wird er zusätzlich in einer eigenen Spalte in Silver abgelegt. Ausserdem werden Daten vereinheitlicht: Ortsnamen erhalten eine einheitliche Schreibweise (z. B. «Zuerich» → «Zürich»), und E-Mail-Adressen werden in Kleinbuchstaben und ohne Leerzeichen gespeichert.
 
-Jede Prüfung schreibt pro Lauf eine Zeile in das Prüfprotokoll `post_dwh_silver.dq_protokoll` (dq = Datenqualität). Die Tabelle wird nicht überschrieben,
-so sieht man die Entwicklung über mehrere Läufe. Im Protokoll sind die vier Prüfungen mit P1 bis P4 nummeriert
-(in der Reihenfolge der Tabelle oben). Ergebnis eines Laufs:
+Jede Prüfung schreibt pro Lauf eine Zeile in das Prüfprotokoll `post_dwh_silver.dq_protokoll` (dq = Datenqualität). Die Tabelle wird nicht überschrieben, so sieht man die Entwicklung über mehrere Läufe. Im Protokoll sind die vier Prüfungen mit P1 bis P4 nummeriert (in der Reihenfolge der Tabelle oben). Ergebnis eines Laufs:
 
 | Prüfung | Tabelle | geprüft | fehlerhaft | Anteil |
 |---|---|---:|---:|---:|
@@ -561,8 +483,7 @@ Die Prüfungen finden genau die Fehler aus Kapitel 4.3 (beim Gewicht: 109 zu sch
 
 ## 9. Auswertungsdashboard
 
-Das Dashboard ist ein **Databricks AI/BI Dashboard** und liest nur aus dem Gold-Layer. Für jede Frage gibt es eine
-Sicht in `post_dwh_gold` (Notebook `40_dashboard_views`). So liegen die Abfragen versioniert im Repository.
+Das Dashboard ist ein Databricks AI/BI Dashboard und liest nur aus dem Gold-Layer. Für jede Frage gibt es eine Sicht in `post_dwh_gold` (Notebook `40_dashboard_views`).
 
 | Frage | Sicht | Darstellung |
 |---|---|---|
@@ -583,35 +504,25 @@ Im betrachteten Zeitraum wurden insgesamt 12'134 Sendungen verkauft, die einen U
 
 ![Dashboard – F1 Brief vs. Paket](bilder/dashboard_f1.png)
 
-Pakete machen rund 60 % der Sendungen aus, erzielen aber über 90 % des Umsatzes. Ein Brief bringt im Schnitt rund 2 CHF ein, ein Paket knapp 20 CHF. Der Anteil der Briefe bleibt über die drei Jahre stabil bei rund 40 %.
-Beide Sendungsarten haben Spitzen im November (Black Friday) und im Dezember (Weihnachten), bei den Paketen fallen sie deutlich stärker aus. Im Dezember 2024 wurden 433 Pakete verschickt, im Juni 2025 nur 229. Der Einbruch am rechten Rand der Grafik ist kein echter Rückgang, sondern liegt daran, dass der letzte Monat, der November 202X, in den Daten nur unvollständig enthalten ist.
+Pakete machen rund 60 % der Sendungen aus, erzielen aber über 90 % des Umsatzes (Ø knapp 20 CHF pro Paket gegenüber rund 2 CHF pro Brief). Beide Sendungsarten haben Spitzen im November (Black Friday) und Dezember (Weihnachten), bei den Paketen deutlich stärker. Der Einbruch am rechten Rand ist kein echter Rückgang: Der November 2026 ist nur unvollständig in den Daten enthalten.
 
 ### 9.3 F2 – Verkaufskanäle
 
 ![Dashboard – F2 Verkaufskanäle](bilder/dashboard_f2.png)
 
-Der wichtigste Verkaufskanal ist das Geschäftskundenportal, über die rund 36 % des Umsatzes laufen. Genutzt wird dieser fast ausschliesslich von Geschäftskunden. Diese kaufen auch bei Online-Portal/WebStamp und pick@home einen grossen Teil ihrer Sendungen. Privatkunden kaufen dagegen vor allem in der Postfiliale, gefolgt von der Post-App und dem My Post 24-Automaten.
-Der digitale Anteil am Umsatz schwankt von Quartal zu Quartal zwischen 54 % und 65 %, ein klarer Trend ist nicht erkennbar. Die Schwankungen entstehen, weil wenige grosse Geschäftskunden mit vielen Sendungen den Umsatz prägen. Der Höchstwert im 4. Quartal 2026 ist wenig aussagekräftig, da dieses Quartal erst bis zum 9. November erfasst ist.
+Der wichtigste Kanal ist das Geschäftskundenportal mit rund 36 % des Umsatzes, genutzt fast nur von Geschäftskunden. Privatkunden kaufen vor allem in der Postfiliale und über die Post-App. Der digitale Anteil am Umsatz schwankt pro Quartal zwischen 54 % und 65 %, ohne klaren Trend.
 
 ### 9.4 F3 – Pünktlichkeit der Pakete
 
 ![Dashboard – F3 Pünktlichkeit](bilder/dashboard_f3.png)
 
-Im Inland kommen 94–96 % der Pakete pünktlich an, im Ausland deutlich weniger: In der Zone Europa sind es 82–86 %, in der Zone Welt zwischen 74 % bei Economy und 91 % bei Priority. International ist Economy damit klar weniger pünktlich als Priority.
-Im Dezember sinkt die Pünktlichkeit in allen Zonen. Im Inland fällt sie von 95.5 % auf 91.9 %, in der Zone Welt von 82.6 % auf 74.4 %. Der Weihnachtseffekt ist also deutlich sichtbar.
-Die starken monatlichen Ausschläge bei Europa und Welt erklären sich durch die geringe Zahl an Auslandpaketen, oft unter 30 pro Monat. Einzelne Verspätungen fallen dadurch stark ins Gewicht.
+Im Inland kommen 94–96 % der Pakete pünktlich an, in Europa 82–86 % und in der Zone Welt 74 % (Economy) bis 91 % (Priority). Im Dezember sinkt die Pünktlichkeit in allen Zonen, im Inland zum Beispiel von 95.5 % auf 91.9 %. Die starken Ausschläge bei Europa und Welt kommen von den kleinen Mengen, oft unter 30 Auslandpaketen pro Monat.
 
 ---
 
-## 10. Fazit und Reflexion
+## 10. Anhang
 
-> **TODO (Dominik, Joel):** Fazit und Reflexion schreiben wir selbst.
-
----
-
-## 11. Anhang
-
-### 11.1 Dateien der Abgabe
+### 10.1 Dateien der Abgabe
 
 | Datei / Ordner | Inhalt |
 |---|---|
@@ -622,20 +533,57 @@ Die starken monatlichen Ausschläge bei Europa und Welt erklären sich durch die
 | `sql/02_…` bis `sql/04_…` | Beispieldaten als INSERT-Skripte (generiert) |
 | `scripts/generate_data.py` | Datengenerator |
 
-### 11.2 Installationsanleitung
+### 10.2 Installationsanleitung
 
 Siehe [`INSTALL.md`](../INSTALL.md). Die Kurzfassung steht am Anfang des Berichts (Schnellstart).
 
-### 11.3 Verwendung von KI-Werkzeugen
+### 10.3 Verwendung von KI-Werkzeugen
 
-Wir haben den KI-Assistenten **Claude** (Anthropic) zur Unterstützung eingesetzt für:
+Wir haben den KI-Assistenten Claude (Anthropic) zur Unterstützung eingesetzt für:
 
 - das SQL-Schema der operativen Datenbank (`sql/01_create_schema.sql`),
 - die Testdaten (Datengenerator `scripts/generate_data.py` und die erzeugten INSERT-Skripte),
 - die ETL-Notebooks und die Dashboard-Sichten (`databricks/`),
 - die Diagramme aus den Mermaid-Quellen sowie Entwürfe für Textteile des Berichts.
 
-Das Dashboard haben wir mit **Databricks Genie** aus einer Beschreibung erzeugt und danach von Hand angepasst (z.B.
-ein falsch eingestelltes Liniendiagramm korrigiert).
+Das Dashboard haben wir mit Databricks Genie aus einer Beschreibung erzeugt und danach von Hand angepasst (z.B. ein falsch eingestelltes Liniendiagramm korrigiert).
 
 Szenario, Entitäten, Fragestellungen und Umfang haben wir vorgegeben. Die Resultate haben wir geprüft: Wir haben alle Skripte und Notebooks in Databricks ausgeführt, die Daten mit den Prüfabfragen (`sql/05_pruefabfragen.sql`) und den Kontrollabfragen der ETL-Notebooks kontrolliert und die Zahlen im Dashboard damit verglichen. Fachliche Korrekturen haben wir selbst eingebracht, z.B. dass normale Briefe keine Sendungsnummer haben.
+
+---
+
+> **TODO – Checkliste für die Abgabe (wird nicht ins PDF übernommen)**
+>
+> Abgabe: **Mo 30.11.2026, 23:00** als ZIP über Moodle.
+>
+> **1. Exporte aus Databricks**
+>
+> - [ ] Im Git-Ordner **Pull** machen (neuester Stand).
+> - [ ] Git-Ordner exportieren: **⋮ → Export → DBC Archive**, umbenennen in `post_leistungsnachweis.dbc`.
+> - [ ] `.dbc` testen: in einen neuen Ordner importieren, `sql/00_setup_alles` und `databricks/00_etl_alles` ausführen.
+> - [ ] Dashboard exportieren: **Dashboards → Dashboard → ⋮ → Export** als `.lvdash.json`.
+> - [ ] Dashboard-Export testen: **Dashboards → Create dashboard → Import**, Kennzahlen vergleichen (12'134 Sendungen, 153'541.10 CHF, 93.4 % Pünktlichkeit).
+> - [ ] Beide Dateien ins Repo legen (z.B. Ordner `abgabe/`).
+>
+> **2. Bericht fertigstellen**
+>
+> - [ ] Schnellstart: Schritt «Dashboard importieren» (`.lvdash.json`) ergänzen.
+> - [ ] Anhang 10.1: Dashboard-Datei und die Ordner `sql/` und `databricks/` in die Dateiliste aufnehmen.
+> - [ ] `INSTALL.md` Kapitel 7: Dashboard-Import statt manuellem Zusammenklicken beschreiben.
+> - [ ] Bericht von beiden Teammitgliedern komplett gegenlesen.
+> - [ ] PDF neu erzeugen (`cd scripts/pdf` → `npm run pdf`) und prüfen: mindestens 10 Seiten, Bilder lesbar, keine unschönen Seitenumbrüche, keine TODOs.
+>
+> **3. ZIP zusammenstellen**
+>
+> - [ ] `bericht.pdf`
+> - [ ] `post_leistungsnachweis.dbc`
+> - [ ] Dashboard-Datei (`.lvdash.json`)
+> - [ ] `INSTALL.md`
+> - [ ] Ordner `sql/` und `databricks/` (für den Einzelimport, falls der `.dbc`-Import nicht klappt)
+> - [ ] `docs/diagramme/` (Mermaid-Quellen) und `scripts/generate_data.py`
+> - [ ] ZIP sinnvoll benennen, z.B. `Leistungsnachweis_DB_DWH_Erbsland_Liechti.zip`, einmal entpacken und Inhalt prüfen.
+>
+> **4. Einreichen**
+>
+> - [ ] Klären, ob ein Teammitglied für beide abgibt oder jedes einzeln.
+> - [ ] ZIP auf Moodle hochladen und Upload kontrollieren.

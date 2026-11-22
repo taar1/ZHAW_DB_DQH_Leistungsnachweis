@@ -25,5 +25,3 @@ hr { display: none; }
 /* Grosse Diagramme etwas begrenzen, damit sie auf eine Seite passen */
 img[src*="erm_oltp"] { max-height: 225mm; width: auto; }
 img[src*="sternschema"] { max-height: 150mm; width: auto; }
-/* Inhaltsverzeichnis und Kapitel 1 auf neuer Seite */
-h2#inhaltsverzeichnis { break-before: page; }

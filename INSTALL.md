@@ -1,11 +1,8 @@
 # Installationsanleitung
 
-Diese Anleitung richtet sich an das Projektteam **und** an die prüfende Person (Dozent/in). Sie beschreibt,
-wie die operative Datenbank `post_oltp` (und das Datawarehouse) in **Databricks** aufgesetzt und
-ausgeführt wird.
+Diese Anleitung richtet sich an das Projektteam **und** an die prüfende Person (Dozent/in). Sie beschreibt, wie die operative Datenbank `post_oltp` (und das Datawarehouse) in **Databricks** aufgesetzt und ausgeführt wird.
 
-> Getestet für die **Databricks Free Edition** (Serverless Compute, Unity Catalog mit Standardkatalog `workspace`).
-> In anderen Workspaces funktioniert es gleich, sofern ein Katalog mit Schreibrechten gewählt ist.
+> Getestet für die **Databricks Free Edition** (Serverless Compute, Unity Catalog mit Standardkatalog `workspace`). In anderen Workspaces funktioniert es gleich, sofern ein Katalog mit Schreibrechten gewählt ist.
 
 ---
 
@@ -26,8 +23,7 @@ Die Abgabe enthält eine **Databricks-Exportdatei** (`.dbc`) mit allen Notebooks
 
 1. In Databricks links auf **Workspace** klicken, den eigenen Benutzerordner öffnen.
 2. Rechts oben **⋮ → Import** wählen, *File* anklicken und die `.dbc`-Datei hochladen.
-3. Den importierten Ordner öffnen und die Notebooks in folgender Reihenfolge ausführen
-   (jeweils oben **Run all**, Compute: *Serverless*):
+3. Den importierten Ordner öffnen und die Notebooks in folgender Reihenfolge ausführen (jeweils oben **Run all**, Compute: *Serverless*):
 
    | Reihenfolge | Notebook | Zweck | Dauer ca. |
    |---|---|---|---|
@@ -36,49 +32,32 @@ Die Abgabe enthält eine **Databricks-Exportdatei** (`.dbc`) mit allen Notebooks
    | 2 | `databricks/00_etl_alles` | ETL Bronze → Silver → Gold und Dashboard-Sichten (Kapitel 6) | 1–2 min |
    | 3 | Dashboard | In der Oberfläche erstellen (Kapitel 7) | 15–30 min |
 
-4. Kontrolle: Im Notebook `05_pruefabfragen` müssen die Zeilenzahlen gemäss Kapitel 5 erscheinen, im ETL die Werte
-   gemäss Kapitel 6.
+4. Kontrolle: Im Notebook `05_pruefabfragen` müssen die Zeilenzahlen gemäss Kapitel 5 erscheinen, im ETL die Werte gemäss Kapitel 6.
 
 ---
 
-## 3. Variante B – Aus dem GitHub-Repository (für das Team)
+## 3. Variante B – Dateien einzeln importieren (falls der `.dbc`-Import nicht klappt)
 
-### B1. Als Git-Ordner verknüpfen (empfohlen)
+Die `.sql`-Dateien beginnen mit `-- Databricks notebook source`. Databricks erkennt sie deshalb automatisch als **SQL-Notebooks** (Zellen sind durch `-- COMMAND ----------` getrennt). Gleichzeitig bleiben es normale SQL-Skripte, die man im Editor lesen oder in einem anderen SQL-Tool ausführen kann.
 
-1. **Workspace → Create → Git folder**.
-2. Git-Repository-URL: `https://github.com/taar1/ZHAW_DB_DQH_Leistungsnachweis`, Provider *GitHub*.
-   - Ist das Repository privat, zuerst unter **Settings → Linked accounts → Git integration** einen
-     GitHub *Personal Access Token* hinterlegen.
-3. Im Git-Ordner `sql/00_setup_alles` öffnen und **Run all** klicken.
-4. Änderungen am Code: im Git-Ordner über den Branch-Button **Pull / Commit & Push**.
+### B1. Notebooks einzeln importieren
 
-Die `.sql`-Dateien beginnen mit `-- Databricks notebook source`. Databricks erkennt sie deshalb automatisch als
-**SQL-Notebooks** (Zellen sind durch `-- COMMAND ----------` getrennt). Gleichzeitig bleiben es normale SQL-Skripte, die
-man im Editor lesen oder in einem anderen SQL-Tool ausführen kann.
+1. Das Abgabe-ZIP entpacken.
+2. In Databricks zwei Ordner anlegen, z.B. `post_leistungsnachweis/sql` und `post_leistungsnachweis/databricks`.
+3. Jeweils **⋮ → Import → File** und alle Dateien aus `sql/` bzw. `databricks/` importieren (Mehrfachauswahl möglich). Die Dateien erscheinen als SQL-Notebooks.
+4. `sql/00_setup_alles` öffnen → **Run all**, danach `databricks/00_etl_alles` → **Run all**.
 
-### B2. Ohne Git: Dateien einzeln importieren
+> Wichtig: `00_setup_alles` und `00_etl_alles` rufen die anderen Notebooks mit `%run ./…` auf. Die Dateien eines Ordners müssen deshalb **im selben Ordner** liegen.
 
-1. Repository als ZIP herunterladen (GitHub → *Code → Download ZIP*) und entpacken.
-2. In Databricks einen Ordner anlegen, z.B. `post_leistungsnachweis/sql`.
-3. **⋮ → Import → File** und alle Dateien aus `sql/` importieren (Mehrfachauswahl möglich).
-   Die Dateien erscheinen als SQL-Notebooks.
-4. `00_setup_alles` öffnen → **Run all**.
+### B2. Nur SQL-Editor (Fallback)
 
-> Wichtig: `00_setup_alles` ruft die anderen Notebooks mit `%run ./…` auf. Alle Dateien aus `sql/` müssen deshalb
-> **im selben Ordner** liegen.
-
-### B3. Nur SQL-Editor (Fallback)
-
-Jede Datei kann auch im **SQL Editor** geöffnet und mit *Run all* ausgeführt werden (Reihenfolge 01 → 05).
-Die grosse Insert-Datei `04_…` (ca. 1.7 MB) ist dort allerdings träge. Die Notebook-Variante ist deshalb vorzuziehen.
+Jede Datei kann auch im **SQL Editor** geöffnet und mit *Run all* ausgeführt werden (Reihenfolge 01 → 05). Die grosse Insert-Datei `04_…` (ca. 1.7 MB) ist dort allerdings träge. Die Notebook-Variante ist deshalb vorzuziehen.
 
 ---
 
 ## 4. Katalog wechseln (falls nicht `workspace`)
 
-Die Skripte verwenden nur schemaqualifizierte Namen (`post_oltp.kunde`) und laufen im **aktuell gewählten Katalog**.
-In einem anderen Workspace entweder in der Katalog-Auswahl oben im Notebook den gewünschten Katalog wählen
-oder vor dem Setup ausführen:
+Die Skripte verwenden nur schemaqualifizierte Namen (`post_oltp.kunde`) und laufen im **aktuell gewählten Katalog**. In einem anderen Workspace entweder in der Katalog-Auswahl oben im Notebook den gewünschten Katalog wählen oder vor dem Setup ausführen:
 
 ```sql
 USE CATALOG <mein_katalog>;
@@ -106,8 +85,7 @@ Nach erfolgreichem Setup liefert `05_pruefabfragen` folgende Werte:
 
 Voraussetzung: Die operative DB ist aufgesetzt (Kapitel 2 bzw. 3).
 
-1. Im Ordner `databricks/` das Notebook **`00_etl_alles`** öffnen → **Run all** (Compute: *Serverless*, ca. 1–2 min).
-   Es führt nacheinander aus:
+1. Im Ordner `databricks/` das Notebook **`00_etl_alles`** öffnen → **Run all** (Compute: *Serverless*, ca. 1–2 min). Es führt nacheinander aus:
 
    | Notebook | Ergebnis |
    |---|---|
@@ -119,8 +97,7 @@ Voraussetzung: Die operative DB ist aufgesetzt (Kapitel 2 bzw. 3).
 2. Kontrolle:
    - `10_bronze_laden`, letzte Zelle: überall `ok = true`.
    - `20_silver_bereinigen`, letzte Zelle: P1 = 12, P2 = 153, P3 = 7, P4 = 43 Fehler.
-   - `30_gold_sternschema`, letzte Zelle: 12'134 Sendungen in Silver und Fakten, alle `ohne_…`-Spalten = 0,
-     Umsatz 153'541.10 CHF, Pünktlichkeit (Pakete) 93.4 %.
+   - `30_gold_sternschema`, letzte Zelle: 12'134 Sendungen in Silver und Fakten, alle `ohne_…`-Spalten = 0, Umsatz 153'541.10 CHF, Pünktlichkeit (Pakete) 93.4 %.
 
 Der ETL-Lauf kann beliebig oft wiederholt werden. Das DQ-Protokoll erhält pro Lauf neue Zeilen.
 
@@ -133,8 +110,7 @@ Das Dashboard selbst wird in der Oberfläche zusammengeklickt. Die Daten kommen 
 ### 7.1 Dashboard und Datenquellen anlegen
 
 1. Links in der Seitenleiste **Dashboards** → **Create dashboard**. Oben den Namen setzen, z.B. *Post Versand – Auswertung*.
-2. Oben auf den Reiter **Data** wechseln → **Create from SQL**. Folgende Abfrage eingeben, **Run** klicken und den
-   Datensatz (Name links in der Liste) umbenennen. Für jede Zeile der Tabelle einen eigenen Datensatz anlegen:
+2. Oben auf den Reiter **Data** wechseln → **Create from SQL**. Folgende Abfrage eingeben, **Run** klicken und den Datensatz (Name links in der Liste) umbenennen. Für jede Zeile der Tabelle einen eigenen Datensatz anlegen:
 
    | Datensatz-Name | SQL |
    |---|---|
@@ -147,8 +123,7 @@ Das Dashboard selbst wird in der Oberfläche zusammengeklickt. Die Daten kommen 
 
 ### 7.2 Visualisierungen hinzufügen
 
-Zurück auf die Seite (Reiter mit dem Seitennamen, z.B. *Untitled page*). Unten in der Werkzeugleiste
-**Add a visualization** wählen, das Widget auf der Fläche platzieren und rechts im Konfigurationsbereich einstellen:
+Zurück auf die Seite (Reiter mit dem Seitennamen, z.B. *Untitled page*). Unten in der Werkzeugleiste **Add a visualization** wählen, das Widget auf der Fläche platzieren und rechts im Konfigurationsbereich einstellen:
 
 | Widget | Datensatz | Visualisierung | Einstellungen |
 |---|---|---|---|
@@ -163,31 +138,27 @@ Zurück auf die Seite (Reiter mit dem Seitennamen, z.B. *Untitled page*). Unten 
 | F3 Pünktlichkeit pro Monat | `f3_monat` | Line | X: `monat_start` (Monthly), Y: `puenktlichkeit_prozent` (SUM), Color: `zone` |
 
 Tipps:
-- Die Sichten sind bereits aggregiert. „SUM“ verändert die Werte deshalb nicht. Ausnahme: Bei `f1_monat` und
-  `f2_kanal` werden mehrere Zeilen zusammengezählt (z.B. alle Monate eines Jahres), das ist gewollt.
-- Mit **Add a text box** Überschriften pro Frage einfügen (z.B. „F1 – Brief vs. Paket“).
+- Die Sichten sind bereits aggregiert. «SUM» verändert die Werte deshalb nicht. Ausnahme: Bei `f1_monat` und `f2_kanal` werden mehrere Zeilen zusammengezählt (z.B. alle Monate eines Jahres), das ist gewollt.
+- Mit **Add a text box** Überschriften pro Frage einfügen (z.B. «F1 – Brief vs. Paket»).
 - Optional: **Add a filter** → Feld `jahr`, damit man das Dashboard auf ein Jahr einschränken kann.
 
 ### 7.3 Veröffentlichen und für die Abgabe sichern
 
 1. Oben rechts **Publish** → das Dashboard wird mit dem Serverless SQL Warehouse ausgeführt.
 2. Screenshots pro Frage für den Bericht (Kapitel 9) erstellen.
-3. Optional ins Repository übernehmen: Dashboard über **⋮ → Export** als `.lvdash.json` speichern (oder per
-   **⋮ → Move** in den Git-Ordner verschieben) und committen.
+3. Für die Abgabe: Dashboard über **⋮ → Export** als `.lvdash.json` speichern.
 
 ---
 
 ## 8. Beispieldaten neu generieren (optional)
 
-Die Insert-Skripte `02`–`04` werden durch `scripts/generate_data.py` erzeugt. Der Zufallsgenerator hat einen fixen Seed,
-deshalb entstehen bei jedem Lauf **identische** Daten.
+Die Insert-Skripte `02`–`04` werden durch `scripts/generate_data.py` erzeugt. Der Zufallsgenerator hat einen fixen Seed, deshalb entstehen bei jedem Lauf **identische** Daten.
 
 ```bash
 python scripts/generate_data.py
 ```
 
-Der Generator benötigt nur die Python-Standardbibliothek. Er gibt am Ende eine Zusammenfassung aus (Zeilen pro Tabelle,
-Anzahl eingebauter Datenqualitätsprobleme).
+Der Generator benötigt nur die Python-Standardbibliothek. Er gibt am Ende eine Zusammenfassung aus (Zeilen pro Tabelle, Anzahl eingebauter Datenqualitätsprobleme).
 
 ---
 

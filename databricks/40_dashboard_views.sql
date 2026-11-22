@@ -3,7 +3,7 @@
 -- MAGIC # 40 – Dashboard: Sichten für die Fragestellungen F1–F3
 -- MAGIC
 -- MAGIC Erstellt im Schema `post_dwh_gold` je Fragestellung eine Sicht (View). Das Dashboard verwendet diese Sichten
--- MAGIC als Datasets (`SELECT * FROM post_dwh_gold.v_…`). So liegt die Logik versioniert im Repository und nicht nur im
+-- MAGIC als Datasets (`SELECT * FROM post_dwh_gold.v_…`). So ist die Logik im Notebook festgehalten und nicht nur im
 -- MAGIC Dashboard.
 -- MAGIC
 -- MAGIC | Sicht | Frage | Visualisierung |
