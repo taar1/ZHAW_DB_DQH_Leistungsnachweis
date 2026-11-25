@@ -481,7 +481,7 @@ Die Prüfungen finden genau die Fehler aus Kapitel 4.3 (beim Gewicht: 109 zu sch
 
 ---
 
-## 9. Auswertungsdashboard
+## 9. Auswertungs-Dashboard
 
 Das Dashboard ist ein Databricks AI/BI Dashboard und liest nur aus dem Gold-Layer. Für jede Frage gibt es eine Sicht in `post_dwh_gold` (Notebook `40_dashboard_views`).
 

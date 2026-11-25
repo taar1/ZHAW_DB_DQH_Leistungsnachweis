@@ -9,3 +9,8 @@ Thumbs.db
 build/
 node_modules/
 bericht/bericht.html
+
+# Abgabe-ZIP wird mit scripts/make_zip.ps1 erzeugt
+abgabe/*.zip
+abgabe/*/
+INSTALL.html

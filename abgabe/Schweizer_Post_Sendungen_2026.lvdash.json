@@ -1,0 +1,861 @@
+{
+  "datasets": [
+    {
+      "name": "v_f2_umsatz_kanal",
+      "displayName": "F2 – Umsatz nach Verkaufskanal",
+      "queryLines": [
+        "SELECT\n",
+        "  *\n",
+        "FROM\n",
+        "  workspace.post_dwh_gold.v_f2_umsatz_kanal"
+      ]
+    },
+    {
+      "name": "v_f3_puenktlichkeit_service",
+      "displayName": "F3 – Pünktlichkeit nach Service",
+      "queryLines": [
+        "SELECT\n",
+        "  *\n",
+        "FROM\n",
+        "  workspace.post_dwh_gold.v_f3_puenktlichkeit_service"
+      ]
+    },
+    {
+      "name": "v_f3_puenktlichkeit_monat",
+      "displayName": "F3 – Pünktlichkeit (Monat)",
+      "queryLines": [
+        "SELECT\n",
+        "  *\n",
+        "FROM\n",
+        "  workspace.post_dwh_gold.v_f3_puenktlichkeit_monat"
+      ]
+    },
+    {
+      "name": "v_f1_brief_paket_monat",
+      "displayName": "F1 – Brief vs. Paket (Monat)",
+      "queryLines": [
+        "SELECT\n",
+        "  *\n",
+        "FROM\n",
+        "  workspace.post_dwh_gold.v_f1_brief_paket_monat"
+      ]
+    },
+    {
+      "name": "v_f2_digital_quartal",
+      "displayName": "F2 – Digitaler Anteil (Quartal)",
+      "queryLines": [
+        "SELECT\n",
+        "  *\n",
+        "FROM\n",
+        "  workspace.post_dwh_gold.v_f2_digital_quartal"
+      ]
+    },
+    {
+      "name": "v_kpi_uebersicht",
+      "displayName": "KPI-Übersicht",
+      "queryLines": [
+        "SELECT\n",
+        "  *\n",
+        "FROM\n",
+        "  workspace.post_dwh_gold.v_kpi_uebersicht"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "40136177",
+      "displayName": "Untitled page",
+      "layout": [
+        {
+          "widget": {
+            "name": "kpi_heading",
+            "spec": {
+              "widgetType": "text",
+              "version": 1,
+              "encodings": {
+                "text": {
+                  "lines": [
+                    "## Kennzahlen – Gesamtübersicht"
+                  ],
+                  "fields": []
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 12,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "counter_sendungen",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "v_kpi_uebersicht",
+                  "fields": [
+                    {
+                      "name": "sum(sendungen)",
+                      "expression": "SUM(`sendungen`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Sendungen"
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(sendungen)",
+                  "rowNumber": 0
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 2,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "counter_umsatz",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "v_kpi_uebersicht",
+                  "fields": [
+                    {
+                      "name": "sum(umsatz_chf)",
+                      "expression": "SUM(`umsatz_chf`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Umsatz (CHF)"
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(umsatz_chf)",
+                  "rowNumber": 0
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 2,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "counter_umsatz_pro_sendung",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "v_kpi_uebersicht",
+                  "fields": [
+                    {
+                      "name": "avg(umsatz_pro_sendung_chf)",
+                      "expression": "AVG(`umsatz_pro_sendung_chf`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Umsatz pro Sendung (CHF)"
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "avg(umsatz_pro_sendung_chf)",
+                  "rowNumber": 0
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 2,
+            "width": 2,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "counter_digital_anteil",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "v_kpi_uebersicht",
+                  "fields": [
+                    {
+                      "name": "avg(digital_anteil_prozent)",
+                      "expression": "AVG(`digital_anteil_prozent`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Digitaler Anteil (%)"
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "avg(digital_anteil_prozent)",
+                  "rowNumber": 0
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 8,
+            "y": 2,
+            "width": 2,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "counter_puenktlichkeit",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "v_kpi_uebersicht",
+                  "fields": [
+                    {
+                      "name": "avg(puenktlichkeit_prozent)",
+                      "expression": "AVG(`puenktlichkeit_prozent`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Pünktlichkeit Pakete (%)"
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "avg(puenktlichkeit_prozent)",
+                  "rowNumber": 0
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 10,
+            "y": 2,
+            "width": 2,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "f1_heading",
+            "spec": {
+              "widgetType": "text",
+              "version": 1,
+              "encodings": {
+                "text": {
+                  "lines": [
+                    "## F1 – Brief vs. Paket"
+                  ],
+                  "fields": []
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 5,
+            "width": 12,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "f1_line_sendungen_monat",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "v_f1_brief_paket_monat",
+                  "fields": [
+                    {
+                      "name": "sendungsart",
+                      "expression": "`sendungsart`"
+                    },
+                    {
+                      "name": "monthly(monat_start)",
+                      "expression": "DATE_TRUNC(\"MONTH\", `monat_start`)"
+                    },
+                    {
+                      "name": "sum(sendungen)",
+                      "expression": "SUM(`sendungen`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Sendungen pro Monat nach Sendungsart"
+              },
+              "version": 3,
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "monthly(monat_start)",
+                  "displayName": "Monat",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(sendungen)",
+                  "displayName": "Sendungen",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "sendungsart",
+                  "displayName": "sendungsart",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 7,
+            "width": 6,
+            "height": 5
+          }
+        },
+        {
+          "widget": {
+            "name": "f1_bar_umsatz_jahr",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "v_f1_brief_paket_monat",
+                  "fields": [
+                    {
+                      "name": "sendungsart",
+                      "expression": "`sendungsart`"
+                    },
+                    {
+                      "name": "jahr",
+                      "expression": "`jahr`"
+                    },
+                    {
+                      "name": "sum(umsatz_chf)",
+                      "expression": "SUM(`umsatz_chf`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Umsatz pro Jahr nach Sendungsart (CHF)"
+              },
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "jahr",
+                  "displayName": "Jahr",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(umsatz_chf)",
+                  "displayName": "Umsatz (CHF)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "sendungsart",
+                  "displayName": "sendungsart",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 7,
+            "width": 6,
+            "height": 5
+          }
+        },
+        {
+          "widget": {
+            "name": "f2_heading",
+            "spec": {
+              "widgetType": "text",
+              "version": 1,
+              "encodings": {
+                "text": {
+                  "lines": [
+                    "## F2 – Verkaufskanäle"
+                  ],
+                  "fields": []
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 12,
+            "width": 12,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "f2_bar_umsatz_kanal",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "v_f2_umsatz_kanal",
+                  "fields": [
+                    {
+                      "name": "kundentyp",
+                      "expression": "`kundentyp`"
+                    },
+                    {
+                      "name": "kanal_name",
+                      "expression": "`kanal_name`"
+                    },
+                    {
+                      "name": "sum(umsatz_chf)",
+                      "expression": "SUM(`umsatz_chf`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Umsatz nach Verkaufskanal und Kundentyp (CHF)"
+              },
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "kanal_name",
+                  "displayName": "Verkaufskanal",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(umsatz_chf)",
+                  "displayName": "Umsatz (CHF)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "kundentyp",
+                  "displayName": "kundentyp",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 14,
+            "width": 6,
+            "height": 5
+          }
+        },
+        {
+          "widget": {
+            "name": "f2_line_digital_quartal",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "v_f2_digital_quartal",
+                  "fields": [
+                    {
+                      "name": "jahr_quartal",
+                      "expression": "`jahr_quartal`"
+                    },
+                    {
+                      "name": "avg(digital_anteil_prozent)",
+                      "expression": "AVG(`digital_anteil_prozent`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Digitaler Anteil pro Quartal (%)",
+                  "fields": []
+                }
+              },
+              "version": 3,
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "jahr_quartal",
+                  "displayName": "Quartal",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "fieldName": "avg(digital_anteil_prozent)",
+                  "displayName": "Digitaler Anteil (%)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 14,
+            "width": 6,
+            "height": 5
+          }
+        },
+        {
+          "widget": {
+            "name": "f3_heading",
+            "spec": {
+              "widgetType": "text",
+              "version": 1,
+              "encodings": {
+                "text": {
+                  "lines": [
+                    "## F3 – Pünktlichkeit Pakete"
+                  ],
+                  "fields": []
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 19,
+            "width": 12,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "f3_bar_puenktlichkeit_service",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "v_f3_puenktlichkeit_service",
+                  "fields": [
+                    {
+                      "name": "zone_service",
+                      "expression": "`zone_service`"
+                    },
+                    {
+                      "name": "avg(puenktlichkeit_prozent)",
+                      "expression": "AVG(`puenktlichkeit_prozent`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Pünktlichkeit nach Zone und Service (%)"
+              },
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "zone_service",
+                  "displayName": "Zone / Service",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "fieldName": "avg(puenktlichkeit_prozent)",
+                  "displayName": "Pünktlichkeit (%)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "zone_service",
+                  "displayName": "Zone / Service",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 21,
+            "width": 6,
+            "height": 5
+          }
+        },
+        {
+          "widget": {
+            "name": "f3_line_puenktlichkeit_monat",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "v_f3_puenktlichkeit_monat",
+                  "fields": [
+                    {
+                      "name": "zone",
+                      "expression": "`zone`"
+                    },
+                    {
+                      "name": "monthly(monat_start)",
+                      "expression": "DATE_TRUNC(\"MONTH\", `monat_start`)"
+                    },
+                    {
+                      "name": "avg(puenktlichkeit_prozent)",
+                      "expression": "AVG(`puenktlichkeit_prozent`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Pünktlichkeit pro Monat nach Zone (%)"
+              },
+              "version": 3,
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "monthly(monat_start)",
+                  "displayName": "Monat",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "fieldName": "avg(puenktlichkeit_prozent)",
+                  "displayName": "Pünktlichkeit (%)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "zone",
+                  "displayName": "zone",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 21,
+            "width": 6,
+            "height": 5
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    },
+    {
+      "name": "global_filters",
+      "displayName": "Global Filters",
+      "layout": [
+        {
+          "widget": {
+            "name": "jahr_filter",
+            "queries": [
+              {
+                "name": "dashboards/01f1e02368a01d94ad11e27862c6ff42/datasets/01f1e023cc741d83996607e65d3a5217_jahr",
+                "query": {
+                  "datasetName": "v_f1_brief_paket_monat",
+                  "fields": [
+                    {
+                      "name": "jahr",
+                      "expression": "`jahr`"
+                    },
+                    {
+                      "name": "jahr_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f1e02368a01d94ad11e27862c6ff42/datasets/01f1e023cbf91be1b582686c8ba15e29_jahr",
+                "query": {
+                  "datasetName": "v_f2_umsatz_kanal",
+                  "fields": [
+                    {
+                      "name": "jahr",
+                      "expression": "`jahr`"
+                    },
+                    {
+                      "name": "jahr_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Jahr",
+                  "fields": []
+                }
+              },
+              "widgetType": "filter-multi-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "jahr",
+                    "queryName": "dashboards/01f1e02368a01d94ad11e27862c6ff42/datasets/01f1e023cc741d83996607e65d3a5217_jahr"
+                  },
+                  {
+                    "fieldName": "jahr",
+                    "queryName": "dashboards/01f1e02368a01d94ad11e27862c6ff42/datasets/01f1e023cbf91be1b582686c8ba15e29_jahr"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 2
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_GLOBAL_FILTERS",
+      "layoutVersion": "GRID_V1"
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"
+    },
+    "applyModeEnabled": false
+  }
+}

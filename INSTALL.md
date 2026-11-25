@@ -1,71 +1,38 @@
 # Installationsanleitung
 
-Diese Anleitung richtet sich an das Projektteam **und** an die prüfende Person (Dozent/in). Sie beschreibt, wie die operative Datenbank `post_oltp` (und das Datawarehouse) in **Databricks** aufgesetzt und ausgeführt wird.
-
-> Getestet für die **Databricks Free Edition** (Serverless Compute, Unity Catalog mit Standardkatalog `workspace`). In anderen Workspaces funktioniert es gleich, sofern ein Katalog mit Schreibrechten gewählt ist.
+Diese Anleitung beschreibt, wie die operative Datenbank `post_oltp` (und das Datawarehouse) in Databricks aufgesetzt und ausgeführt wird.
 
 ---
 
-## 1. Voraussetzungen
+## 1. Hinweise vorab
 
-| Was | Details |
-|---|---|
-| Databricks-Account | Free Edition genügt: <https://www.databricks.com/learn/free-edition> |
-| Compute | *Serverless* (in der Free Edition automatisch vorhanden) |
-| Katalog | `workspace` (Standard in der Free Edition). Es werden die Schemas `post_oltp`, `post_dwh_bronze`, `post_dwh_silver`, `post_dwh_gold` angelegt. |
-| Optional: Python 3.9+ | Nur nötig, wenn die Beispieldaten neu generiert werden sollen (`scripts/generate_data.py`). |
+Getestet mit der Databricks Free Edition (Serverless, Katalog `workspace`). Angelegt werden die Schemas `post_oltp`, `post_dwh_bronze`, `post_dwh_silver` und `post_dwh_gold`. Ein bestehendes Schema `post_oltp` wird dabei vollständig gelöscht und neu angelegt, in den DWH-Schemas werden gleichnamige Tabellen überschrieben.
 
 ---
 
-## 2. Variante A – Abgabe-Datei importieren (für die prüfende Person)
+## 2. Notebooks importieren und ausführen
 
-Die Abgabe enthält eine **Databricks-Exportdatei** (`.dbc`) mit allen Notebooks.
+Die Abgabe enthält die Databricks-Exportdatei `Leistungsnachweis_DB_DWH_Erbsland_Liechti.dbc` mit allen Notebooks.
 
 1. In Databricks links auf **Workspace** klicken, den eigenen Benutzerordner öffnen.
-2. Rechts oben **⋮ → Import** wählen, *File* anklicken und die `.dbc`-Datei hochladen.
-3. Den importierten Ordner öffnen und die Notebooks in folgender Reihenfolge ausführen (jeweils oben **Run all**, Compute: *Serverless*):
+2. Rechts oben ⋮ → **Import** wählen, *File* anklicken und die `.dbc`-Datei hochladen.
 
-   | Reihenfolge | Notebook | Zweck | Dauer ca. |
-   |---|---|---|---|
-   | 1 | `sql/00_setup_alles` | Führt 01–05 automatisch nacheinander aus | 1–2 min |
-   | – | *(alternativ einzeln:)* `01_create_schema` … `05_pruefabfragen` | | |
-   | 2 | `databricks/00_etl_alles` | ETL Bronze → Silver → Gold und Dashboard-Sichten (Kapitel 6) | 1–2 min |
-   | 3 | Dashboard | In der Oberfläche erstellen (Kapitel 7) | 15–30 min |
+Der Import legt den Ordner `post_leistungsnachweis` mit den Unterordnern `sql/` und `databricks/` an. Darin die Notebooks in folgender Reihenfolge ausführen (jeweils oben **Run all**, Compute: *Serverless*):
 
-4. Kontrolle: Im Notebook `05_pruefabfragen` müssen die Zeilenzahlen gemäss Kapitel 5 erscheinen, im ETL die Werte gemäss Kapitel 6.
+| Reihenfolge | Notebook | Zweck |
+|---|---|---|
+| 1 | `sql/00_setup_alles` | Führt 01–05 automatisch nacheinander aus |
+| – | *(alternativ einzeln:)* `01_create_schema` … `05_pruefabfragen` | |
+| 2 | `databricks/00_etl_alles` | ETL Bronze → Silver → Gold und Dashboard-Sichten (Kapitel 4) |
+| 3 | Dashboard | Datei `.lvdash.json` importieren (Kapitel 5) |
 
----
+Kontrolle: Im Notebook `05_pruefabfragen` müssen die Zeilenzahlen gemäss Kapitel 3 erscheinen, im ETL die Werte gemäss Kapitel 4.
 
-## 3. Variante B – Dateien einzeln importieren (falls der `.dbc`-Import nicht klappt)
-
-Die `.sql`-Dateien beginnen mit `-- Databricks notebook source`. Databricks erkennt sie deshalb automatisch als **SQL-Notebooks** (Zellen sind durch `-- COMMAND ----------` getrennt). Gleichzeitig bleiben es normale SQL-Skripte, die man im Editor lesen oder in einem anderen SQL-Tool ausführen kann.
-
-### B1. Notebooks einzeln importieren
-
-1. Das Abgabe-ZIP entpacken.
-2. In Databricks zwei Ordner anlegen, z.B. `post_leistungsnachweis/sql` und `post_leistungsnachweis/databricks`.
-3. Jeweils **⋮ → Import → File** und alle Dateien aus `sql/` bzw. `databricks/` importieren (Mehrfachauswahl möglich). Die Dateien erscheinen als SQL-Notebooks.
-4. `sql/00_setup_alles` öffnen → **Run all**, danach `databricks/00_etl_alles` → **Run all**.
-
-> Wichtig: `00_setup_alles` und `00_etl_alles` rufen die anderen Notebooks mit `%run ./…` auf. Die Dateien eines Ordners müssen deshalb **im selben Ordner** liegen.
-
-### B2. Nur SQL-Editor (Fallback)
-
-Jede Datei kann auch im **SQL Editor** geöffnet und mit *Run all* ausgeführt werden (Reihenfolge 01 → 05). Die grosse Insert-Datei `04_…` (ca. 1.7 MB) ist dort allerdings träge. Die Notebook-Variante ist deshalb vorzuziehen.
+Falls der Import der `.dbc`-Datei nicht klappt, lassen sich die Dateien aus den Ordnern `sql/` und `databricks/` des Abgabe-ZIP auch einzeln importieren (⋮ → **Import** → *File*, Mehrfachauswahl möglich). Die Dateien jedes Ordners müssen dabei zusammen in einem Ordner liegen, weil `00_setup_alles` und `00_etl_alles` die anderen Notebooks mit `%run` aufrufen.
 
 ---
 
-## 4. Katalog wechseln (falls nicht `workspace`)
-
-Die Skripte verwenden nur schemaqualifizierte Namen (`post_oltp.kunde`) und laufen im **aktuell gewählten Katalog**. In einem anderen Workspace entweder in der Katalog-Auswahl oben im Notebook den gewünschten Katalog wählen oder vor dem Setup ausführen:
-
-```sql
-USE CATALOG <mein_katalog>;
-```
-
----
-
-## 5. Erwartete Zeilenzahlen
+## 3. Erwartete Zeilenzahlen
 
 Nach erfolgreichem Setup liefert `05_pruefabfragen` folgende Werte:
 
@@ -81,94 +48,60 @@ Nach erfolgreichem Setup liefert `05_pruefabfragen` folgende Werte:
 
 ---
 
-## 6. Datawarehouse laden (ETL)
+## 4. Datawarehouse laden (ETL)
 
-Voraussetzung: Die operative DB ist aufgesetzt (Kapitel 2 bzw. 3).
+Voraussetzung: Die operative DB ist aufgesetzt (Kapitel 2).
 
-1. Im Ordner `databricks/` das Notebook **`00_etl_alles`** öffnen → **Run all** (Compute: *Serverless*, ca. 1–2 min). Es führt nacheinander aus:
+Im Ordner `databricks/` das Notebook **`00_etl_alles`** öffnen → **Run all** (Compute: *Serverless*). Es führt nacheinander aus:
 
-   | Notebook | Ergebnis |
-   |---|---|
-   | `10_bronze_laden` | Schema `post_dwh_bronze` mit 7 Tabellen + Ladekontrolle |
-   | `20_silver_bereinigen` | Schema `post_dwh_silver` mit bereinigten Tabellen und `dq_protokoll` |
-   | `30_gold_sternschema` | Schema `post_dwh_gold` mit `dim_datum`, `dim_kunde`, `dim_produkt`, `dim_kanal`, `dim_zielland`, `fact_sendung` |
-   | `40_dashboard_views` | 6 Sichten `post_dwh_gold.v_…` als Datenquellen für das Dashboard |
+| Notebook | Ergebnis |
+|---|---|
+| `10_bronze_laden` | Schema `post_dwh_bronze` mit unveränderten Kopien der 7 Tabellen (plus Ladezeitpunkt `_geladen_am`) |
+| `20_silver_bereinigen` | Schema `post_dwh_silver` mit bereinigten Tabellen und `dq_protokoll` |
+| `30_gold_sternschema` | Schema `post_dwh_gold` mit `dim_datum`, `dim_kunde`, `dim_produkt`, `dim_kanal`, `dim_zielland`, `fact_sendung` |
+| `40_dashboard_views` | 6 Sichten `post_dwh_gold.v_…` als Datenquellen für das Dashboard |
 
-2. Kontrolle:
-   - `10_bronze_laden`, letzte Zelle: überall `ok = true`.
-   - `20_silver_bereinigen`, letzte Zelle: P1 = 12, P2 = 153, P3 = 7, P4 = 43 Fehler.
-   - `30_gold_sternschema`, letzte Zelle: 12'134 Sendungen in Silver und Fakten, alle `ohne_…`-Spalten = 0, Umsatz 153'541.10 CHF, Pünktlichkeit (Pakete) 93.4 %.
+Der ETL-Lauf kann beliebig oft wiederholt werden.
 
-Der ETL-Lauf kann beliebig oft wiederholt werden. Das DQ-Protokoll erhält pro Lauf neue Zeilen.
+### Kontrolle
 
----
+Jedes Notebook zeigt in der letzten Zelle ein Prüfergebnis.
 
-## 7. Dashboard erstellen (Databricks AI/BI)
+**`10_bronze_laden`:** Die Zeilenzahl jeder Tabelle in Bronze wird mit der Quelle `post_oltp` verglichen. In der Spalte `ok` muss überall `true` stehen.
 
-Das Dashboard selbst wird in der Oberfläche zusammengeklickt. Die Daten kommen aus den Sichten von `40_dashboard_views`.
+**`20_silver_bereinigen`:** Hier laufen vier Datenqualitätsprüfungen. In die Beispieldaten haben wir absichtlich Fehler eingebaut, die diese Prüfungen finden sollen. Fehlerhafte Datensätze werden markiert und bereinigt, aber nicht gelöscht. Erwartet wird folgende Anzahl Fehler:
 
-### 7.1 Dashboard und Datenquellen anlegen
+| Prüfung | Was geprüft wird | Fehler |
+|---|---|---:|
+| P1 Referentielle Integrität | Der Empfänger einer Sendung existiert in der Tabelle `empfaenger`. | 12 |
+| P2 Plausibilität Gewicht | Das Gewicht ist grösser als 0 und liegt innerhalb der Gewichtslimite des Produkts. | 153 |
+| P3 Plausibilität Zustelldatum | Das Zustelldatum liegt nicht vor dem Aufgabedatum. | 7 |
+| P4 Abstimmung Auftragstotal | Der Betrag eines Auftrags entspricht der Summe seiner Sendungen. | 43 |
 
-1. Links in der Seitenleiste **Dashboards** → **Create dashboard**. Oben den Namen setzen, z.B. *Post Versand – Auswertung*.
-2. Oben auf den Reiter **Data** wechseln → **Create from SQL**. Folgende Abfrage eingeben, **Run** klicken und den Datensatz (Name links in der Liste) umbenennen. Für jede Zeile der Tabelle einen eigenen Datensatz anlegen:
+Die Ergebnisse werden zusätzlich in der Tabelle `post_dwh_silver.dq_protokoll` gespeichert. Pro Lauf kommen vier Zeilen dazu, ältere Läufe bleiben erhalten.
 
-   | Datensatz-Name | SQL |
-   |---|---|
-   | `kpi` | `SELECT * FROM workspace.post_dwh_gold.v_kpi_uebersicht` |
-   | `f1_monat` | `SELECT * FROM workspace.post_dwh_gold.v_f1_brief_paket_monat` |
-   | `f2_kanal` | `SELECT * FROM workspace.post_dwh_gold.v_f2_umsatz_kanal` |
-   | `f2_digital` | `SELECT * FROM workspace.post_dwh_gold.v_f2_digital_quartal` |
-   | `f3_service` | `SELECT * FROM workspace.post_dwh_gold.v_f3_puenktlichkeit_service` |
-   | `f3_monat` | `SELECT * FROM workspace.post_dwh_gold.v_f3_puenktlichkeit_monat` |
-
-### 7.2 Visualisierungen hinzufügen
-
-Zurück auf die Seite (Reiter mit dem Seitennamen, z.B. *Untitled page*). Unten in der Werkzeugleiste **Add a visualization** wählen, das Widget auf der Fläche platzieren und rechts im Konfigurationsbereich einstellen:
-
-| Widget | Datensatz | Visualisierung | Einstellungen |
-|---|---|---|---|
-| Kennzahl Sendungen | `kpi` | Counter | Value: `sendungen` (SUM) |
-| Kennzahl Umsatz | `kpi` | Counter | Value: `umsatz_chf` (SUM) |
-| Kennzahl Pünktlichkeit | `kpi` | Counter | Value: `puenktlichkeit_prozent` (SUM) |
-| F1 Sendungen pro Monat | `f1_monat` | Line | X: `monat_start` (Monthly), Y: `sendungen` (SUM), Color: `sendungsart` |
-| F1 Umsatz pro Jahr | `f1_monat` | Bar | X: `jahr`, Y: `umsatz_chf` (SUM), Color: `sendungsart` |
-| F2 Umsatz pro Kanal | `f2_kanal` | Bar | X: `kanal_name`, Y: `umsatz_chf` (SUM), Color: `kundentyp` |
-| F2 Anteil digital | `f2_digital` | Line | X: `jahr_quartal`, Y: `digital_anteil_prozent` (SUM) |
-| F3 Pünktlichkeit pro Service | `f3_service` | Bar | X: `zone_service`, Y: `puenktlichkeit_prozent` (SUM) |
-| F3 Pünktlichkeit pro Monat | `f3_monat` | Line | X: `monat_start` (Monthly), Y: `puenktlichkeit_prozent` (SUM), Color: `zone` |
-
-Tipps:
-- Die Sichten sind bereits aggregiert. «SUM» verändert die Werte deshalb nicht. Ausnahme: Bei `f1_monat` und `f2_kanal` werden mehrere Zeilen zusammengezählt (z.B. alle Monate eines Jahres), das ist gewollt.
-- Mit **Add a text box** Überschriften pro Frage einfügen (z.B. «F1 – Brief vs. Paket»).
-- Optional: **Add a filter** → Feld `jahr`, damit man das Dashboard auf ein Jahr einschränken kann.
-
-### 7.3 Veröffentlichen und für die Abgabe sichern
-
-1. Oben rechts **Publish** → das Dashboard wird mit dem Serverless SQL Warehouse ausgeführt.
-2. Screenshots pro Frage für den Bericht (Kapitel 9) erstellen.
-3. Für die Abgabe: Dashboard über **⋮ → Export** als `.lvdash.json` speichern.
+**`30_gold_sternschema`:** Silver und Faktentabelle enthalten beide 12'134 Sendungen. Die Spalten `ohne_datum`, `ohne_kunde`, `ohne_produkt`, `ohne_kanal` und `ohne_zielland` zählen Sendungen ohne passenden Eintrag in der jeweiligen Dimension und müssen alle 0 sein. Dazu kommen der Umsatz von 153'541.10 CHF und die Pünktlichkeit der Pakete von 93.4 %.
 
 ---
 
-## 8. Beispieldaten neu generieren (optional)
+## 5. Dashboard (Databricks AI/BI)
 
-Die Insert-Skripte `02`–`04` werden durch `scripts/generate_data.py` erzeugt. Der Zufallsgenerator hat einen fixen Seed, deshalb entstehen bei jedem Lauf **identische** Daten.
+Die Daten des Dashboards kommen aus den Sichten von `40_dashboard_views`. Voraussetzung ist deshalb, dass der ETL-Lauf (Kapitel 4) durchgelaufen ist.
 
-```bash
-python scripts/generate_data.py
-```
+1. Links in der Seitenleiste **Dashboards** öffnen.
+2. Beim Knopf **Create dashboard** auf den Pfeil daneben klicken → **Import dashboard from file** und die Datei `Schweizer_Post_Sendungen_2026.lvdash.json` aus der Abgabe wählen.
+3. Kontrolle: Die Kennzahlen-Kacheln zeigen 12'134 Sendungen, 153'541.1 CHF Umsatz und 93.4 % Pünktlichkeit.
 
-Der Generator benötigt nur die Python-Standardbibliothek. Er gibt am Ende eine Zusammenfassung aus (Zeilen pro Tabelle, Anzahl eingebauter Datenqualitätsprobleme).
+Die Datensätze verwenden voll qualifizierte Namen (`workspace.post_dwh_gold.v_…`). Wer einen anderen Katalog als `workspace` verwendet, passt die SQL der Datensätze im Reiter **Data** entsprechend an.
 
 ---
 
-## 9. Häufige Probleme
+## 6. Häufige Probleme
 
 | Problem | Lösung |
 |---|---|
 | `SCHEMA_NOT_FOUND` / `TABLE_OR_VIEW_NOT_FOUND` | Zuerst `01_create_schema` ausführen; prüfen, ob der richtige Katalog gewählt ist. |
-| `%run`: Notebook nicht gefunden | Alle `sql/*`-Dateien müssen im selben Ordner liegen und als Notebook importiert sein. |
 | `PERMISSION_DENIED` beim `CREATE SCHEMA` | Einen Katalog wählen, in dem man Schreibrechte hat (Free Edition: `workspace`). |
 | Insert sehr langsam | Prüfen, ob *Serverless* als Compute gewählt ist. Jede Insert-Zelle enthält 1000 Zeilen. |
-| `post_dwh_…` nicht gefunden (Dashboard/ETL) | Zuerst `databricks/00_etl_alles` ausführen; im Dashboard-SQL den Katalog `workspace.` voranstellen. |
+| `post_dwh_…` nicht gefunden (Dashboard) | Zuerst `databricks/00_etl_alles` ausführen. Bei einem anderen Katalog als `workspace` die SQL der Datensätze anpassen (Kapitel 5). |
 | Neu aufsetzen | Einfach `00_setup_alles` erneut ausführen. `01_create_schema` löscht das Schema `post_oltp` vorher vollständig. |
