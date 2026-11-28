@@ -41,7 +41,7 @@ Beide Notebooks laufen je 1–2 Minuten und können beliebig oft ausgeführt wer
 
 ### 1.1 Beruflicher Kontext
 
-Wir arbeiten beide bei der Schweizerischen Post / PostAuto. Die Post verkauft Privat- und Geschäftskunden den Versand von Briefen und Paketen, im Inland und ins Ausland. Verkauft wird über physische Kanäle (Postfiliale, Filiale mit Partner, My Post 24-Automat, Abholung pick@home) und über digitale Kanäle (Online-Porto/WebStamp, Post-App, Geschäftskundenportal bzw. Versandschnittstelle). Pakete erhalten eine Sendungsnummer und können verfolgt werden, normale Briefe nicht.
+Wir arbeiten beide bei der Schweizerischen Post. Die Post verkauft Privat- und Geschäftskunden den Versand von Briefen und Paketen, im Inland und ins Ausland. Verkauft wird über physische Kanäle (Postfiliale, Filiale mit Partner, My Post 24-Automat, Abholung pick@home) und über digitale Kanäle (Online-Porto/WebStamp, Post-App, Geschäftskundenportal bzw. Versandschnittstelle). Pakete erhalten eine Sendungsnummer und können verfolgt werden, normale Briefe nicht.
 
 Wir bilden einen vereinfachten Ausschnitt dieses Geschäfts ab. Produkte und Preise lehnen sich an das Sortiment der Post an. Alle Kunden- und Empfängerdaten sind erfunden.
 
