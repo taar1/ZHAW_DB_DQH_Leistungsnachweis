@@ -422,9 +422,9 @@ Die Faktentabelle `fact_sendung` enthält die Kennzahlen und die Schlüssel auf 
 
 **Entscheide**
 
-- **Schlüssel:** Die Dimensionen übernehmen die IDs aus der operativen DB (`kunde_id`, `produkt_id` …), das Datum hat den Schlüssel `YYYYMMDD`. Da wir keine Historie führen (SCD Typ 1: Änderungen überschreiben den alten Wert), braucht es keine zusätzlichen Schlüssel.
+- Schlüssel: Die Dimensionen übernehmen die IDs aus der operativen DB (`kunde_id`, `produkt_id` …), das Datum hat den Schlüssel `YYYYMMDD`. Da wir keine Historie führen (SCD Typ 1: Änderungen überschreiben den alten Wert), braucht es keine zusätzlichen Schlüssel.
 - `tracking_nr` und `status` stehen direkt in der Faktentabelle (*degenerierte Dimensionen*). Für zwei Spalten lohnt sich keine eigene Dimension. Bei Briefen sind beide leer.
-- **Unbekannte Werte:** Sendungen ohne gültigen Empfänger (Datenfehler, siehe Kapitel 8) bekommen das Zielland `XX – Unbekannt`, damit ihr Umsatz nicht verloren geht.
+- Unbekannte Werte: Sendungen ohne gültigen Empfänger (Datenfehler, siehe Kapitel 8) bekommen das Zielland `XX – Unbekannt`, damit ihr Umsatz nicht verloren geht.
 
 ---
 
