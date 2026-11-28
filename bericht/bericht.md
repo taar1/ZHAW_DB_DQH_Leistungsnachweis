@@ -377,9 +377,9 @@ Alle Kennzahlen lassen sich nach Zeit (Jahr, Quartal, Monat), Produkt, Kanal, Ku
 
 Diese drei Fragen werden im Dashboard (Kapitel 9) beantwortet:
 
-- **Frage 1 – Brief vs. Paket:** Wie entwickeln sich Menge und Umsatz von Briefen und Paketen von Monat zu Monat? Welche Saisonalität gibt es?
-- **Frage 2 – Verkaufskanäle:** Wie viel Umsatz bringt welcher Kanal und Kundentyp, und wächst der digitale Anteil?
-- **Frage 3 – Pünktlichkeit:** Wie pünktlich sind die Pakete pro Zone und Service (Priority, Economy, Same Day)? Sinkt die Pünktlichkeit vor Weihnachten? 
+1. Frage 1 – Brief vs. Paket: Wie entwickeln sich Menge und Umsatz von Briefen und Paketen von Monat zu Monat? Welche Saisonalität gibt es?
+2. Frage 2 – Verkaufskanäle: Wie viel Umsatz bringt welcher Kanal und Kundentyp, und wächst der digitale Anteil?
+3. Frage 3 – Pünktlichkeit: Wie pünktlich sind die Pakete pro Zone und Service (Priority, Economy, Same Day)? Sinkt die Pünktlichkeit vor Weihnachten? 
 
 ---
 
