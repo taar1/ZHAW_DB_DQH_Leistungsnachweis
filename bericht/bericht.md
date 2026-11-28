@@ -445,10 +445,10 @@ Bei jedem Lauf werden alle Schichten komplett neu geladen (*Full Load* mit `CREA
 
 Die Notebooks liegen im Ordner [`databricks/`](../databricks), `00_etl_alles` führt sie der Reihe nach aus:
 
-- **`10_bronze_laden`** kopiert jede Tabelle unverändert nach Bronze und vergleicht danach die Zeilenzahlen mit der Quelle.
-- **`20_silver_bereinigen`** vereinheitlicht Ortsnamen und E-Mail-Adressen, führt die vier Datenqualitätsprüfungen aus (Kapitel 8), markiert fehlerhafte Datensätze und schreibt das Prüfprotokoll.
-- **`30_gold_sternschema`** erzeugt `dim_datum` als Kalender (ein Eintrag pro Tag 2024–2026), übernimmt die übrigen Dimensionen aus Silver und baut `fact_sendung`. Dabei werden Laufzeit und Pünktlichkeit berechnet. Eine Kontrollabfrage prüft, dass jede Sendung genau einmal vorkommt und jeder Schlüssel eine Dimension findet.
-- **`40_dashboard_views`** legt pro Frage eine Sicht für das Dashboard an (Kapitel 9).
+- `10_bronze_laden` kopiert jede Tabelle unverändert nach Bronze und vergleicht danach die Zeilenzahlen mit der Quelle.
+- `20_silver_bereinigen` vereinheitlicht Ortsnamen und E-Mail-Adressen, führt die vier Datenqualitätsprüfungen aus (Kapitel 8), markiert fehlerhafte Datensätze und schreibt das Prüfprotokoll.
+- `30_gold_sternschema` erzeugt `dim_datum` als Kalender (ein Eintrag pro Tag 2024–2026), übernimmt die übrigen Dimensionen aus Silver und baut `fact_sendung`. Dabei werden Laufzeit und Pünktlichkeit berechnet. Eine Kontrollabfrage prüft, dass jede Sendung genau einmal vorkommt und jeder Schlüssel eine Dimension findet.
+- `40_dashboard_views` legt pro Frage eine Sicht für das Dashboard an (Kapitel 9).
 
 ---
 
