@@ -49,10 +49,10 @@ Wir bilden einen vereinfachten Ausschnitt dieses Geschäfts ab. Produkte und Pre
 
 Die Anwendung deckt diese Abläufe ab:
 
-1. **Kunden:** Privat- und Geschäftskunden werden mit Name bzw. Firma, E-Mail und Adresse erfasst.
-2. **Verkauf:** Ein Kunde kauft über einen Verkaufskanal eine oder mehrere Sendungen. Ein Kauf ist ein Auftrag.
-3. **Sendungen:** Jede Position eines Auftrags ist eine Sendung mit genau einem Produkt (z.B. *Paket Priority M*) und einem Empfänger. Pakete erhalten eine Trackingnummer.
-4. **Zustellung:** Zu jeder Sendung gibt es das Aufgabedatum und das versprochene Zustelldatum (Soll). Bei Paketen kommen aus dem Tracking das effektive Zustelldatum (Ist) und der Status dazu (unterwegs, zugestellt, retourniert, verloren). Bei Briefen bleiben diese Felder leer.
+1. Kunden: Privat- und Geschäftskunden werden mit Name bzw. Firma, E-Mail und Adresse erfasst.
+2. Verkauf: Ein Kunde kauft über einen Verkaufskanal eine oder mehrere Sendungen. Ein Kauf ist ein Auftrag.
+3. Sendungen: Jede Position eines Auftrags ist eine Sendung mit genau einem Produkt (z.B. *Paket Priority M*) und einem Empfänger. Pakete erhalten eine Trackingnummer.
+4. Zustellung: Zu jeder Sendung gibt es das Aufgabedatum und das versprochene Zustelldatum (Soll). Bei Paketen kommen aus dem Tracking das effektive Zustelldatum (Ist) und der Status dazu (unterwegs, zugestellt, retourniert, verloren). Bei Briefen bleiben diese Felder leer.
 
 Nicht abgebildet sind die einzelnen Scans der Sendungsverfolgung, Zusatzleistungen wie Einschreiben und die Standorte (Filialen, Sortierzentren). Für unsere Fragen (Kapitel 5) braucht es sie nicht.
 
