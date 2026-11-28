@@ -151,8 +151,8 @@ Die operative Datenbank ist im Unity Catalog das Schema `workspace.post_oltp` (D
 
 Wichtige Entscheide über alle Tabellen:
 
-- **Datentypen:** Geldbeträge als `DECIMAL` (keine Rundungsfehler wie bei `DOUBLE`), Daten als `DATE`, Postleitzahlen als `STRING` (ausländische PLZ enthalten Buchstaben, z.B. «SW1A 1AA»).
-- **Schlüssel:** `PRIMARY KEY` und `FOREIGN KEY` sind definiert. Databricks prüft sie aber nicht, sie dienen nur der Dokumentation und erscheinen im Catalog Explorer. Die referentielle Integrität prüfen wir deshalb selbst im ETL (Kapitel 8).
+- Datentypen: Geldbeträge als `DECIMAL` (keine Rundungsfehler wie bei `DOUBLE`), Daten als `DATE`, Postleitzahlen als `STRING` (ausländische PLZ enthalten Buchstaben, z.B. «SW1A 1AA»).
+- Schlüssel: `PRIMARY KEY` und `FOREIGN KEY` sind definiert. Databricks prüft sie aber nicht, sie dienen nur der Dokumentation und erscheinen im Catalog Explorer. Die referentielle Integrität prüfen wir deshalb selbst im ETL (Kapitel 8).
 
 Die folgenden Abschnitte beschreiben jede Tabelle mit einem Auszug aus der DDL.
 
